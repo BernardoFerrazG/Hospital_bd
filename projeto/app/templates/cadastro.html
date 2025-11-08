@@ -1,5 +1,5 @@
-{% extends 'usuarios/base.html' %} {% block conteudo %}
-
+{% extends 'base.html' %} {% block conteudo %}
+<title>Cadastro</title>
 <style>
   /* Estilização da tela de login */
   .form-container {
@@ -34,12 +34,14 @@
 </style>
 
 <div class="form-container">
-  <h1>Login</h1>
-  <form action="{% url 'login' %}" method="post">
+  <h1>Cadastro de usuário</h1>
+  <form action="{% url 'cadastro' %}" method="POST">
     {% csrf_token %}
-
     <label for="nome">Nome</label>
     <input name="nome" class="form-control-sm" type="text" />
+
+    <label for="email">Email</label>
+    <input name="email" class="form-control-sm" type="text" />
 
     <label for="senha">Senha</label>
     <input name="senha" class="form-control-sm" type="text" />
@@ -53,7 +55,7 @@
       <option value="admin">Admin</option>
     </select>
 
-    <button class="form-control-sm">Entrar</button>
+    <button class="form-control-sm">Cadastrar</button>
   </form>
 </div>
 {% endblock %}

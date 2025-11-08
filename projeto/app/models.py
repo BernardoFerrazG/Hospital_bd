@@ -1,9 +1,9 @@
 from django.db import models
-
-# Create your models here.
-# serve para criar o que vamos usar nesse app, as informações que vamos armazenar no banco de dados
+from django.contrib.auth.models import User
 
 class Usuario(models.Model):
-    id_usuario = models.AutoField(primary_key=True)
-    nome = models.TextField(max_length=100)
-    idade = models.IntegerField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    papel = models.CharField(max_length=50, default='paciente') 
+    
+    def __str__(self):
+        return self.user.username
