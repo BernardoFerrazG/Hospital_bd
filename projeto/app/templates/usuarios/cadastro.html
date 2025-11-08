@@ -1,0 +1,61 @@
+{% extends 'usuarios/base.html' %} {% block conteudo %}
+
+<style>
+  /* Estilização da tela de login */
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 250px;
+    text-align: left;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  input,
+  select,
+  button {
+    width: 100%;
+  }
+
+  button {
+    margin-top: 10px;
+  }
+</style>
+
+<div class="form-container">
+  <h1>Cadastro de usuário</h1>
+  <form action="{% url 'cadastro' %}" method="POST">
+    {% csrf_token %}
+    <label for="nome">Nome</label>
+    <input name="nome" class="form-control-sm" type="text" />
+
+    <label for="email">Email</label>
+    <input name="email" class="form-control-sm" type="text" />
+
+    <label for="senha">Senha</label>
+    <input name="senha" class="form-control-sm" type="text" />
+
+    <label for="papel">Papel</label>
+    <select name="papel" class="form-control-sm">
+      <option value="">Selecione...</option>
+      <option value="medico">Médico</option>
+      <option value="enfermeiro">Enfermeiro</option>
+      <option value="paciente">Paciente</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <button class="form-control-sm">Cadastrar</button>
+  </form>
+</div>
+{% endblock %}
