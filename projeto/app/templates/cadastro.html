@@ -1,5 +1,5 @@
-{% extends 'base.html' %} {% block conteudo %}
-<title>Cadastro</title>
+{% extends 'usuarios/base.html' %} {% block conteudo %}
+
 <style>
   /* Estilização da tela de login */
   .form-container {
@@ -39,6 +39,13 @@
     {% csrf_token %}
     <label for="nome">Nome</label>
     <input name="nome" class="form-control-sm" type="text" />
+
+    <label for="cpf">cpf</label>
+    <input name="cpf" class="form-control-sm" type="text" />
+
+    <label for="crm">crm</label>
+    <input name="crm" class="form-control-sm" type="text" />
+    
 
     <label for="email">Email</label>
     <input name="email" class="form-control-sm" type="text" />
