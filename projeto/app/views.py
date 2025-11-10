@@ -82,3 +82,20 @@ def login(request):
 @login_required(login_url='/auth/login/')
 def plataforma(request):
     return HttpResponse("plataforma.")
+
+
+@login_required(login_url='/auth/login/')
+def home(request):
+    return render(request, "usuarios/home.html")
+
+@login_required(login_url='/auth/login/')
+def home_med(request):
+    return render(request, "usuarios/home_med.html")
+
+@login_required(login_url='/auth/login/')
+def home_enf(request):
+    return render(request, "usuarios/home_enf.html")
+
+@login_required(login_url='/auth/login/')
+def home_admin(request):
+    return render(request, "usuarios/home_admin.html")
