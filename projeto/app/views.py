@@ -1,10 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as login_django
 from django.contrib.auth.decorators import login_required
-from .models import Pessoa, Funcionario, Medico #acho q vai ter q fazer isso para todas as tabelas
+from .models import Pessoa, Funcionario, Medico, Departamento, FuncionarioTrabalhaEm #acho q vai ter q fazer isso para todas as tabelas
 
 # Create your views here.
 # serve para criar a logica do que vai ser exibido nas telas do nosso app
@@ -99,3 +99,31 @@ def home_enf(request):
 @login_required(login_url='/auth/login/')
 def home_admin(request):
     return render(request, "usuarios/home_admin.html")
+
+@login_required(login_url='/auth/login/')
+def alocar(request):
+    if request.method == "GET":
+        funcionarios = Funcionario.objects.all()
+        departamentos = Departamento.objects.all()
+        return render(request, "usuarios/alocar.html", {
+            "funcionarios": funcionarios,
+            "departamentos": departamentos
+        })
+
+    elif request.method == "POST":
+        cpf_funcionario = request.POST.get("cpf_funcionario")
+        nome_departamento = request.POST.get("nome_departamento")
+        data_inicio = request.POST.get("data_inicio")
+        data_fim = request.POST.get("data_fim")
+
+        funcionario = Funcionario.objects.get(fcpf=cpf_funcionario)
+        departamento = Departamento.objects.get(dnome=nome_departamento)
+
+        FuncionarioTrabalhaEm.objects.create(
+            cpf_funcionario=funcionario,
+            nome_departamento=departamento,
+            data_inicio=data_inicio or None,
+            data_fim=data_fim or None
+        )
+
+        return HttpResponse("Funcionário alocado com sucesso!")
