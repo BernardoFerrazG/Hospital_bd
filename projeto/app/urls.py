@@ -1,8 +1,16 @@
 from django.urls import path
-from . import views
+from app import views
 
 urlpatterns = [
     path('cadastro/', views.cadastro, name='cadastro'),
+
+    path('cadastro/medico/', views.cadastro_medico, name='cadastro_medico'),
+    path('cadastro/enfermeiro/', views.cadastro_enfermeiro, name='cadastro_enfermeiro'),
+    path('cadastro/admin/', views.cadastro_admin, name='cadastro_admin'),
+    path('cadastro/paciente/', views.cadastro_paciente, name='cadastro_paciente'),
+
+
+
     path('login/', views.login, name='login'),
     path('home/', views.home, name='home'),
     path('home_med/', views.home_med, name='home_med'),

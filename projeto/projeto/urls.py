@@ -1,11 +1,15 @@
-# Define os links do site
-from django.contrib import admin
-from django.urls import path, include
-from app import views # importa as views do app
-
+from django.urls import path
+from app import views
 
 urlpatterns = [
-    path('', views.cadastro, name='cadastro'),
+    path('cadastro/', views.cadastro, name='cadastro'),
+
+    path('cadastro/medico/', views.cadastro_medico, name='cadastro_medico'),
+    path('cadastro/enfermeiro/', views.cadastro_enfermeiro, name='cadastro_enfermeiro'),
+    path('cadastro/admin/', views.cadastro_admin, name='cadastro_admin'),
+    path('cadastro/paciente/', views.cadastro_paciente, name='cadastro_paciente'),
+
+
     path('login/', views.login, name='login'),
     path('home/', views.home, name='home'),
     path('home_med/', views.home_med, name='home_med'),

@@ -43,8 +43,57 @@ class Medico(models.Model):
         managed = False
         db_table = 'medico'
         
-        
-## Modelo para Departamento e Alocação de Funcionários
+class Enfermeiro(models.Model):
+    coren = models.CharField(primary_key=True, max_length=20)
+    ecpf = models.OneToOneField(
+        Funcionario,
+        to_field='fcpf',
+        on_delete=models.CASCADE,
+        db_column='ecpf'
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'enfermeiro'
+
+    def __str__(self):
+        return f"{self.coren} - {self.ecpf_id}"
+
+
+class Administrador(models.Model):
+    acpf = models.OneToOneField(
+        Funcionario,
+        to_field='fcpf',
+        on_delete=models.CASCADE,
+        db_column='acpf',
+        primary_key=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'administrador'
+
+    def __str__(self):
+        return f"Administrador (CPF func): {self.acpf_id}"
+
+
+class Paciente(models.Model):
+    pcpf = models.OneToOneField(
+        Pessoa,
+        to_field='cpf',
+        on_delete=models.CASCADE,
+        db_column='pcpf',
+        primary_key=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'paciente'
+
+    def __str__(self):
+        return f"Paciente (CPF): {self.pcpf_id}"
+
+
         
 class Departamento(models.Model):
     dnome = models.CharField(primary_key=True, max_length=50)
