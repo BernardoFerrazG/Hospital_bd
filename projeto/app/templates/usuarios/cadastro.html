@@ -1,59 +1,36 @@
-{% extends 'usuarios/base.html' %} {% block conteudo %}
-
-<style>
-  /* Estilização da tela de login */
-  .form-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 250px;
-    text-align: left;
-  }
-
-  label {
-    font-weight: bold;
-  }
-
-  input,
-  select,
-  button {
-    width: 100%;
-  }
-
-  button {
-    margin-top: 10px;
-  }
-</style>
+{% extends 'usuarios/base.html' %}
+{% block conteudo %}
 
 <div class="form-container">
-  <h1>Cadastro de usuário</h1>
-  <form action="{% url 'cadastro' %}" method="POST">
+  <h1>Cadastro de usuário — teste</h1>
+
+  <!-- FORM SIMPLES PARA TESTE -->
+  <form id="form-cadastro" action="{% url 'cadastro' %}" method="POST" novalidate>
     {% csrf_token %}
-    <label for="nome">Nome</label>
-    <input name="nome" class="form-control-sm" type="text" />
 
-    <label for="cpf">cpf</label>
-    <input name="cpf" class="form-control-sm" type="text" />
+    <label>Nome *</label>
+    <input name="nome" type="text" required value="Teste Usuario">
 
-    <label for="crm">crm</label>
-    <input name="crm" class="form-control-sm" type="text" />
+    <label>CPF *</label>
+    <input name="cpf" type="text" required value="12345678900">
 
-    <label for="email">Email</label>
-    <input name="email" class="form-control-sm" type="text" />
+    <label>Sexo</label>
+    <input name="sexo" type="text" value="M">
 
-    <label for="senha">Senha</label>
-    <input name="senha" class="form-control-sm" type="text" />
+    <label>Telefone</label>
+    <input name="telefone" type="text" value="31999999999">
 
-    <label for="papel">Papel</label>
-    <select name="papel" class="form-control-sm">
+    <label>Email</label>
+    <input name="email" type="email" value="a@b.com">
+
+    <label>Data de Nascimento</label>
+    <input name="data_nascimento" type="date">
+
+    <label>Senha *</label>
+    <input name="senha" type="password" required value="senha123">
+
+    <label>Papel *</label>
+    <select name="papel" required>
       <option value="">Selecione...</option>
       <option value="medico">Médico</option>
       <option value="enfermeiro">Enfermeiro</option>
@@ -61,7 +38,13 @@
       <option value="admin">Admin</option>
     </select>
 
-    <button class="form-control-sm">Cadastrar</button>
+    <!-- botão submit normal -->
+    <button id="btn-submit" type="submit">Próximo (POST)</button>
   </form>
+
+  <p style="margin-top:12px; color:gray;">
+    Observação: este é um formulário de teste — se isso enviar POST, o problema está no seu template original (JS/base).
+  </p>
 </div>
+
 {% endblock %}

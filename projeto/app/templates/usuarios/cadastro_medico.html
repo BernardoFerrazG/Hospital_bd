@@ -1,0 +1,28 @@
+{% extends 'usuarios/base.html' %}
+{% block conteudo %}
+
+<div class="form-container">
+  <h1>Cadastro Médico</h1>
+  <form action="{% url 'cadastro_medico' %}" method="POST">
+    {% csrf_token %}
+
+    <!-- se a view passou 'pessoa' no contexto, colocamos o cpf como hidden -->
+    {% if pessoa %}
+      <input type="hidden" name="cpf" value="{{ pessoa.cpf }}">
+      <p>Registrando dados para: <strong>{{ pessoa.nome }}</strong> (CPF: {{ pessoa.cpf }})</p>
+    {% endif %}
+
+    <label>CRM *</label>
+    <input name="crm" type="text" required>
+
+    <label>Salário</label>
+    <input name="salario" type="number" step="0.01">
+
+    <label>Horas trabalhadas</label>
+    <input name="horas_trabalhadas" type="number" step="0.01">
+
+    <button type="submit">Cadastrar Médico</button>
+  </form>
+</div>
+
+{% endblock %}
