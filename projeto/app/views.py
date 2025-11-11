@@ -18,6 +18,8 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse
 from .models import Pessoa
 
+def landing(request):
+    return render(request, "usuarios/landing.html")
 
 
 def cadastro(request):
@@ -375,40 +377,47 @@ def login(request):
     if request.method == "GET":
         return render(request, "usuarios/login.html")
 
-    username = request.POST.get("nome")
-    senha = request.POST.get("senha")
+    username = request.POST.get("nome", "").strip()   # campo do form
+    senha = request.POST.get("senha", "")
 
     user = authenticate(username=username, password=senha)
-
     if not user:
-        return HttpResponse("Credenciais inválidas!")
+        return HttpResponse("Credenciais inválidas!", status=401)
 
-    # Login Django
+    # efetua o login no django
     login_django(request, user)
 
-    # Descobre a pessoa correspondente
-    try:
-        pessoa = Pessoa.objects.get(nome=username)
-    except Pessoa.DoesNotExist:
-        return HttpResponse("Usuário não encontrado no banco de pessoas.", status=404)
+    # Tentar encontrar Pessoa: primeiro por CPF (username pode ser cpf), senão por nome
+    pessoa = None
+    # tentativa 1: CPF exato (11 dígitos ou o que estiver no username)
+    pessoa = Pessoa.objects.filter(cpf=username).first()
+    if not pessoa:
+        # tentativa 2: procurar pelo nome (caso você tenha usado nome como username)
+        pessoa = Pessoa.objects.filter(nome=username).first()
 
-    # Tenta achar se ele é funcionário
-    funcionario = Funcionario.objects.filter(fcpf=pessoa.cpf).first()
+    if not pessoa:
+        # usuário autenticou mas não tem Pessoa vinculada
+        return HttpResponse("Usuário autenticado, mas sem registro na tabela Pessoa.", status=404)
 
-    # Verifica o tipo de papel (função)
+    # tenta achar Funcionario associado (fcpf é OneToOneField para Pessoa)
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+
     if funcionario:
-        if Medico.objects.filter(mcpf=funcionario.fcpf).exists():
+        # agora verifica qual cargo
+        if Medico.objects.filter(mcpf=funcionario).exists():
             return redirect(reverse("home_med"))
-        elif Enfermeiro.objects.filter(ecpf=funcionario.fcpf).exists():
+        if Enfermeiro.objects.filter(ecpf=funcionario).exists():
             return redirect(reverse("home_enf"))
-        elif Administrador.objects.filter(acpf=funcionario.fcpf).exists():
+        if Administrador.objects.filter(acpf=funcionario).exists():
             return redirect(reverse("home_admin"))
+        # se for funcionario mas nenhum dos papéis acima:
+        return HttpResponse("Funcionário encontrado, mas sem papel (medico/enfermeiro/admin) definido.", status=403)
     else:
-        if Paciente.objects.filter(pcpf=pessoa.cpf).exists():
+        # não é funcionário — verificar se é paciente
+        if Paciente.objects.filter(pcpf=pessoa).exists():
             return redirect(reverse("home"))
-    
-    return HttpResponse("Papel do usuário não identificado.", status=403)
-        
+        else:
+            return HttpResponse("Usuário não encontrado como funcionário nem paciente.", status=404)
 
 
 
