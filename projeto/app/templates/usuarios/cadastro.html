@@ -1,15 +1,64 @@
 {% extends 'usuarios/base.html' %}
 {% block conteudo %}
 
-<div class="form-container">
-  <h1>Cadastro de usuário — teste</h1>
+<style>
+  .form-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 25px 30px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
 
-  <!-- FORM SIMPLES PARA TESTE -->
+  .form-container h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 22px;
+  }
+
+  form label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+  }
+
+  form input, form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+
+  button#btn-submit {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    font-size: 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button#btn-submit:hover {
+    background-color: #0056b3;
+  }
+</style>
+
+<div class="form-container">
+  <h1>Cadastro de Usuário</h1>
+
   <form id="form-cadastro" action="{% url 'cadastro' %}" method="POST" novalidate>
     {% csrf_token %}
 
     <label>Nome *</label>
-    <input name="nome" type="text" required value="Teste Usuario">
+    <input name="nome" type="text" required value="João Silva">
 
     <label>CPF *</label>
     <input name="cpf" type="text">
@@ -24,7 +73,7 @@
     <input name="email" type="email">
 
     <label>Data de Nascimento</label>
-    <input name="data_nascimento" type="date">
+    <input name="data_nascimento" type="date" value="1990-01-01">
 
     <label>Senha *</label>
     <input name="senha" type="password" required value="senha123">
@@ -32,16 +81,14 @@
     <label>Papel *</label>
     <select name="papel" required>
       <option value="">Selecione...</option>
-      <option value="medico">Médico</option>
+      <option value="medico" selected>Médico</option>
       <option value="enfermeiro">Enfermeiro</option>
       <option value="paciente">Paciente</option>
       <option value="admin">Admin</option>
     </select>
 
-    <!-- botão submit normal -->
-    <button id="btn-submit" type="submit">Próximo (POST)</button>
+    <button id="btn-submit" type="submit">Próximo</button>
   </form>
-
 </div>
 
 {% endblock %}

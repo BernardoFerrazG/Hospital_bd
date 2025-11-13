@@ -2,6 +2,9 @@ from django.urls import path
 from app import views
 
 urlpatterns = [
+
+    path('', views.landing, name='landing'),
+
     path('cadastro/', views.cadastro, name='cadastro'),
 
     path('cadastro/medico/', views.cadastro_medico, name='cadastro_medico'),
