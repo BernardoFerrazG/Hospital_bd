@@ -23,7 +23,7 @@ def cadastro_paciente(request):
             pessoa = None
 
     if request.method == "GET":
-        return render(request, "usuarios/cadastro_paciente.html", {"pessoa": pessoa})
+        return render(request, "cadastros/cadastro_paciente.html", {"pessoa": pessoa})
 
     # POST
     cpf_hidden = request.POST.get("cpf", "").strip()
@@ -76,5 +76,5 @@ def cadastro_paciente(request):
 
 @login_required(login_url='/auth/login/')
 def home(request):
-    return render(request, "usuarios/home.html")
+    return render(request, "home/home.html")
 

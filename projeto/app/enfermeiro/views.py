@@ -27,7 +27,7 @@ def cadastro_enfermeiro(request):
             pessoa = None
 
     if request.method == "GET":
-        return render(request, "usuarios/cadastro_enfermeiro.html", {"pessoa": pessoa})
+        return render(request, "cadastros/cadastro_enfermeiro.html", {"pessoa": pessoa})
 
     # POST
     coren = request.POST.get("coren", "").strip()
@@ -92,5 +92,5 @@ def cadastro_enfermeiro(request):
 
 @login_required(login_url='/auth/login/')
 def home_enf(request):
-    return render(request, "usuarios/home_enf.html")
+    return render(request, "home/home_enf.html")
 
