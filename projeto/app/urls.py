@@ -19,5 +19,7 @@ urlpatterns = [
     path('home_med/', views.home_med, name='home_med'),
     path('home_enf/', views.home_enf, name='home_enf'),
     path('home_admin/', views.home_admin, name='home_admin'),
-    path('alocar/', views.alocar, name='alocar'),
+    path('alocar/', views.alocar_funcionario, name='alocar'),
+    path('alocar/enfermeiro/', views.enfermeiro_alocacoes, name='enfermeiro_alocacoes')
+
 ]

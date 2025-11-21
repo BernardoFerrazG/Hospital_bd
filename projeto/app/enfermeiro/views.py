@@ -94,3 +94,6 @@ def cadastro_enfermeiro(request):
 def home_enf(request):
     return render(request, "home/home_enf.html")
 
+
+def enfermeiro_alocacoes(request):
+    return render(request, "alocar/enfermeiro_alocacoes.html")
