@@ -24,7 +24,7 @@ def cadastro_admin(request):
             pessoa = None
 
     if request.method == "GET":
-        return render(request, "usuarios/cadastro_admin.html", {"pessoa": pessoa})
+        return render(request, "cadastros/cadastro_admin.html", {"pessoa": pessoa})
 
     # POST
     cpf_hidden = request.POST.get("cpf", "").strip()
@@ -83,14 +83,14 @@ def cadastro_admin(request):
 
 @login_required(login_url='/auth/login/')
 def home_admin(request):
-    return render(request, "usuarios/home_admin.html")
+    return render(request, "home/home_admin.html")
 
 @login_required(login_url='/auth/login/')
 def alocar(request):
     if request.method == "GET":
         funcionarios = Funcionario.objects.all()
         departamentos = Departamento.objects.all()
-        return render(request, "usuarios/alocar.html", {
+        return render(request, "alocar/alocar_funcionario.html", {
             "funcionarios": funcionarios,
             "departamentos": departamentos
         })

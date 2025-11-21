@@ -24,7 +24,7 @@ def cadastro_medico(request):
 
     if request.method == "GET":
         # Se a view foi chamada após o cadastro inicial você pode passar 'pessoa' no contexto
-        return render(request, "usuarios/cadastro_medico.html", {"pessoa": pessoa})
+        return render(request, "cadastros/cadastro_medico.html", {"pessoa": pessoa})
 
     # POST: lê campos mínimos
     crm = request.POST.get("crm", "").strip()
@@ -80,4 +80,4 @@ def cadastro_medico(request):
 
 @login_required(login_url='/auth/login/')
 def home_med(request):
-    return render(request, "usuarios/home_med.html")
+    return render(request, "home/home_med.html")

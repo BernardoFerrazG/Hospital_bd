@@ -1,0 +1,37 @@
+{% extends 'base.html' %} {% block conteudo %}
+
+<div class="form-container">
+  <h1>Cadastro Médico</h1>
+  <form action="{% url 'cadastro_medico' %}" method="POST">
+    {% csrf_token %} {% if pessoa %}
+    <!-- Exibe para confirmação; também colocamos o cpf real em hidden -->
+    <input type="hidden" name="cpf" value="{{ pessoa.cpf }}" />
+    <p>Registrando para: <strong>{{ pessoa.nome }}</strong></p>
+    <p>CPF cadastrado: <strong>{{ pessoa.cpf }}</strong></p>
+
+    <label>Confirme o CPF *</label>
+    <input
+      name="cpf_confirm"
+      type="text"
+      required
+      placeholder="Digite o CPF para confirmar"
+    />
+    {% else %}
+    <!-- Se não veio pessoa no contexto, pedimos que o usuário digite/ confirme o CPF -->
+    <label>CPF *</label>
+    <input name="cpf_confirm" type="text" required placeholder="Digite o CPF" />
+
+    <p style="color: gray; font-size: 0.9rem">
+      Observação: sem CPF pré-criado, este formulário também criará o vínculo
+      usando o CPF informado.
+    </p>
+    {% endif %}
+
+    <label>CRM *</label>
+    <input name="crm" type="text" required placeholder="Ex: 12345" />
+
+    <button type="submit">Cadastrar Médico</button>
+  </form>
+</div>
+
+{% endblock %}

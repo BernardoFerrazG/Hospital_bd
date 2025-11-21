@@ -13,12 +13,12 @@ from .paciente.views import cadastro_paciente, home
 
 
 def landing(request):
-    return render(request, "usuarios/landing.html")
+    return render(request, "login/landing.html")
 
 
 def cadastro(request):
     if request.method == "GET":
-        return render(request, "usuarios/cadastro.html")
+        return render(request, "cadastros/cadastro.html")
     
 
     # POST
@@ -78,7 +78,7 @@ def cadastro(request):
 
 def login(request):
     if request.method == "GET":
-        return render(request, "usuarios/login.html")
+        return render(request, "login/login.html")
 
     username = request.POST.get("nome", "").strip()   # campo do form
     senha = request.POST.get("senha", "")

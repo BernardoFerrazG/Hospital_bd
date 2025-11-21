@@ -1,0 +1,32 @@
+{% extends 'base.html' %} {% block conteudo %}
+
+<div class="form-container">
+  <h1>Cadastro Paciente</h1>
+  <form action="{% url 'cadastro_paciente' %}" method="POST">
+    {% csrf_token %} {% if pessoa %}
+    <input type="hidden" name="cpf" value="{{ pessoa.cpf }}" />
+    <p>Registrando para: <strong>{{ pessoa.nome }}</strong></p>
+    <p>CPF cadastrado: <strong>{{ pessoa.cpf }}</strong></p>
+
+    <label>Confirme o CPF *</label>
+    <input
+      name="cpf_confirm"
+      type="text"
+      required
+      placeholder="Digite o CPF para confirmar"
+    />
+    {% else %}
+    <label>CPF *</label>
+    <input name="cpf_confirm" type="text" required placeholder="Digite o CPF" />
+
+    <p style="color: gray; font-size: 0.9rem">
+      Observação: se a pessoa ainda não estiver cadastrada, faça o cadastro
+      inicial primeiro.
+    </p>
+    {% endif %}
+
+    <button type="submit">Cadastrar Paciente</button>
+  </form>
+</div>
+
+{% endblock %}

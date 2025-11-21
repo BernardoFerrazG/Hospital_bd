@@ -1,5 +1,4 @@
-{% extends 'usuarios/base.html' %}
-{% block conteudo %}
+{% extends 'base.html' %} {% block conteudo %}
 
 <style>
   .form-container {
@@ -8,7 +7,7 @@
     padding: 25px 30px;
     background-color: #f8f9fa;
     border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
 
   .form-container h1 {
@@ -25,7 +24,8 @@
     color: #333;
   }
 
-  form input, form select {
+  form input,
+  form select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
@@ -54,29 +54,34 @@
 <div class="form-container">
   <h1>Cadastro de Usuário</h1>
 
-  <form id="form-cadastro" action="{% url 'cadastro' %}" method="POST" novalidate>
+  <form
+    id="form-cadastro"
+    action="{% url 'cadastro' %}"
+    method="POST"
+    novalidate
+  >
     {% csrf_token %}
 
     <label>Nome *</label>
-    <input name="nome" type="text" required value="João Silva">
+    <input name="nome" type="text" required value="João Silva" />
 
     <label>CPF *</label>
-    <input name="cpf" type="text">
+    <input name="cpf" type="text" />
 
     <label>Sexo</label>
-    <input name="sexo" type="text" value="M">
+    <input name="sexo" type="text" value="M" />
 
     <label>Telefone</label>
-    <input name="telefone" type="text" value="31999999999">
+    <input name="telefone" type="text" value="31999999999" />
 
     <label>Email</label>
-    <input name="email" type="email">
+    <input name="email" type="email" />
 
     <label>Data de Nascimento</label>
-    <input name="data_nascimento" type="date" value="1990-01-01">
+    <input name="data_nascimento" type="date" value="1990-01-01" />
 
     <label>Senha *</label>
-    <input name="senha" type="password" required value="senha123">
+    <input name="senha" type="password" required value="senha123" />
 
     <label>Papel *</label>
     <select name="papel" required>
