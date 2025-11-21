@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2>Salas de Cirurgia</h2>
+  <a href="{% url 'home_med' %}" class="btn btn-secondary mb-3">Voltar</a>
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Nº</th><th>Departamento</th><th>Médico (CRM)</th><th>Enfermeiro (COREN)</th><th>Status</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for sala in salas %}
+      <tr>
+        <td>{{ sala.numero }}</td>
+        <td>{{ sala.departamento }}</td>
+        <td>{{ sala.fmedico }}</td>
+        <td>{{ sala.fenfermeiro }}</td>
+        <td>{{ sala.status }}</td>
+        <td>
+          <a href="{% url 'alocar_sala' sala.numero %}" class="btn btn-sm btn-primary">Abrir</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">Nenhuma sala encontrada.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
