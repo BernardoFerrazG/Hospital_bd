@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
-from ..models import Pessoa, Funcionario, Enfermeiro
+from ..models import Pessoa, Funcionario, Enfermeiro, Departamento, FuncionarioTrabalhaEm
 from django.contrib.auth.decorators import login_required
 
 
@@ -93,7 +93,66 @@ def cadastro_enfermeiro(request):
 @login_required(login_url='/auth/login/')
 def home_enf(request):
     return render(request, "home/home_enf.html")
-
-
+@login_required(login_url='/auth/login/')
 def enfermeiro_alocacoes(request):
-    return render(request, "alocar/enfermeiro_alocacoes.html")
+    # Monta lista de alocações para o enfermeiro logado compatível com o template
+    from types import SimpleNamespace
+    from django.contrib.auth.models import User
+
+    # Tenta encontrar a Pessoa associada ao usuário (mesma lógica do login)
+    username = request.user.username if request.user and request.user.is_authenticated else None
+    pessoa = None
+    if username:
+        pessoa = Pessoa.objects.filter(cpf=username).first()
+        if not pessoa:
+            pessoa = Pessoa.objects.filter(nome=username).first()
+
+    if not pessoa:
+        return HttpResponse("Pessoa vinculada ao usuário não encontrada.", status=404)
+
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+    if not funcionario:
+        return HttpResponse("Funcionário não encontrado.", status=404)
+
+    # verifica se é enfermeiro
+    try:
+        Enfermeiro.objects.get(ecpf=funcionario)
+    except Enfermeiro.DoesNotExist:
+        return HttpResponse("Nenhum enfermeiro vinculado a esse funcionário.", status=403)
+
+    # Busca alocações (aqui usamos FuncionarioTrabalhaEm, que no modelo atual é one-to-one;
+    # ainda assim montamos uma lista para o template que espera um iterável)
+    alocs_qs = FuncionarioTrabalhaEm.objects.filter(cpf_funcionario=funcionario)
+
+    alocacoes = []
+    for a in alocs_qs:
+        # local esperado pelo template: objeto com atributo `nome`
+        local_nome = a.nome_departamento.dnome if a.nome_departamento else None
+        local = SimpleNamespace(nome=local_nome)
+
+        # tenta inferir quem fez a alocação a partir do departamento (campo cpf_administrador)
+        admin_username = "—"
+        if a.nome_departamento and getattr(a.nome_departamento, 'cpf_administrador', None):
+            cpf_admin = a.nome_departamento.cpf_administrador
+            admin_pessoa = Pessoa.objects.filter(cpf=cpf_admin).first()
+            if admin_pessoa:
+                admin_user = User.objects.filter(username=admin_pessoa.nome).first()
+                if admin_user:
+                    admin_username = admin_user.username
+                else:
+                    admin_username = admin_pessoa.nome
+            else:
+                admin_username = cpf_admin
+
+        alocado_por = SimpleNamespace(usuario=SimpleNamespace(username=admin_username))
+
+        alocacoes.append(
+            SimpleNamespace(
+                local=local,
+                data_inicio=a.data_inicio,
+                data_fim=a.data_fim,
+                alocado_por=alocado_por,
+            )
+        )
+
+    return render(request, "alocar/enfermeiro_alocacoes.html", {"alocacoes": alocacoes})
