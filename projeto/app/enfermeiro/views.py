@@ -92,7 +92,16 @@ def cadastro_enfermeiro(request):
 
 @login_required(login_url='/auth/login/')
 def home_enf(request):
-    return render(request, "home/home_enf.html")
+    nome_user = request.user.username  
+    pessoa = Pessoa.objects.get(nome=nome_user)
+    funcionario = Funcionario.objects.get(fcpf=pessoa.cpf)
+    enfermeiro = Enfermeiro.objects.get(ecpf=funcionario)
+
+    return render(request, "home/home_enf.html", {
+        "enfermeiro": enfermeiro
+    })
+
+
 @login_required(login_url='/auth/login/')
 def enfermeiro_alocacoes(request):
     # Monta lista de alocações para o enfermeiro logado compatível com o template
