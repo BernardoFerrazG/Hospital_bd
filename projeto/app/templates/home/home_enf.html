@@ -103,11 +103,15 @@
             <div class="card action-card h-100">
               <div class="card-body text-center d-flex flex-column">
                 <i class="bi bi-clipboard2-pulse card-icon mb-3"></i>
-                <h5 class="card-title">GERENCIAR LEITOS UTI</h5>
+                <h5 class="card-title">VER MINHAS ALOCAÇÕES</h5>
                 <p class="card-text text-muted">
-                  Visualize o status e aloque pacientes nos leitos de UTI.
+                  cheque onde você está alocado.
                 </p>
-                <a href="#" class="btn btn-primary mt-auto">Ver Leitos UTI</a>
+                <a
+                  href="{% url 'enfermeiro_alocacoes' %}"
+                  class="btn btn-primary mt-auto"
+                  >Ver Alocações</a
+                >
               </div>
             </div>
           </div>

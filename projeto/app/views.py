@@ -7,8 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from .models import Pessoa, Funcionario, Medico, Paciente, Enfermeiro, Departamento, Administrador, FuncionarioTrabalhaEm
 from .medico.views import cadastro_medico, home_med
-from .enfermeiro.views import cadastro_enfermeiro, home_enf
-from .administrador.views import cadastro_admin, home_admin, alocar
+from .enfermeiro.views import cadastro_enfermeiro, home_enf, enfermeiro_alocacoes
+from .administrador.views import cadastro_admin, home_admin, alocar_funcionario
 from .paciente.views import cadastro_paciente, home
 
 
@@ -126,6 +126,7 @@ def login(request):
 @login_required(login_url='/auth/login/')
 def plataforma(request):
     return HttpResponse("plataforma.")
+
 
 
 

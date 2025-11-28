@@ -86,7 +86,7 @@ def home_admin(request):
     return render(request, "home/home_admin.html")
 
 @login_required(login_url='/auth/login/')
-def alocar(request):
+def alocar_funcionario(request):
     if request.method == "GET":
         funcionarios = Funcionario.objects.all()
         departamentos = Departamento.objects.all()
