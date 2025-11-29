@@ -1,0 +1,80 @@
+{% extends 'usuarios/base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+  <h2>Alocação de Sala de Cirurgia</h2>
+  <p>Selecione a sala, data e horário para reservar. Você será identificado como o médico logado.</p>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h5>Salas cadastradas</h5>
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Sala</th>
+            <th>Departamento</th>
+            <th>Médico</th>
+            <th>Enf.</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sala in salas %}
+          <tr>
+            <td>{{ sala.numero }}</td>
+            <td>{{ sala.departamento|default:"-" }}</td>
+            <td>{{ sala.fmedico.crm if sala.fmedico else "—" }}</td>
+            <td>{{ sala.fenfermeiro.coren if sala.fenfermeiro else "—" }}</td>
+            <td>{{ sala.status|default:"disponível" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5">Nenhuma sala cadastrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-md-6">
+      <h5>Reservar sala</h5>
+      <form method="post" action="{% url 'alocar_sala' %}">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Sala</label>
+          <select name="sala_numero" class="form-select" required>
+            <option value="">Selecione...</option>
+            {% for sala in salas %}
+              <option value="{{ sala.numero }}">{{ sala.numero }} — {{ sala.departamento|default:"-" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Data</label>
+          <input type="date" name="data" class="form-control" required>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Horário</label>
+          <input type="time" name="horario" class="form-control" required>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Enfermeiro (COREN) — opcional</label>
+          <select name="coren" class="form-select">
+            <option value="">Nenhum</option>
+            {% for enf in enfermeiros %}
+              <option value="{{ enf.coren }}">{{ enf.coren }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Paciente (CPF) — opcional</label>
+          <input type="text" name="paciente_pcpf" class="form-control" placeholder="somente números">
+        </div>
+
+        <button class="btn btn-primary">Alocar Sala</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

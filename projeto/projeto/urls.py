@@ -1,5 +1,6 @@
 from django.urls import path
 from app import views
+from app.medico.views import listar_salas, alocar_sala
 
 urlpatterns = [
 
@@ -18,6 +19,10 @@ urlpatterns = [
     path('home_med/', views.home_med, name='home_med'),
     path('home_enf/', views.home_enf, name='home_enf'),
     path('home_admin/', views.home_admin, name='home_admin'),
+
     path('alocar/', views.alocar_funcionario, name='alocar'),
-    path('alocar/enfermeiro/', views.enfermeiro_alocacoes, name='enfermeiro_alocacoes')
+    path('alocar/enfermeiro/', views.enfermeiro_alocacoes, name='enfermeiro_alocacoes'),
+
+    path('medico/salas/', listar_salas, name='listar_salas'),
+    path('medico/salas/alocar/', alocar_sala, name='alocar_sala'),
 ]
