@@ -88,11 +88,12 @@ def home_med(request):
 @login_required(login_url='/login/')
 def listar_salas(request):
     """
-    Lista salas de cirurgia e mostra formulário para reservar.
+    Lista somente salas disponíveis e mostra formulário para reservar.
     """
-    salas = SalaCirurgia.objects.all().order_by('numero')
-    enfermeiros = Enfermeiro.objects.all()
-    return render(request, "alocar/alocar_sala.html", {
+    # só salas com status 'disponivel' (case-insensitive)
+    salas = SalaCirurgia.objects.filter(status__iexact='disponivel').order_by('numero')
+    enfermeiros = Enfermeiro.objects.all().order_by('ecpf')  # traz todos (para atribuir)
+    return render(request, "usuarios/medico/listar_salas.html", {
         "salas": salas,
         "enfermeiros": enfermeiros,
     })
@@ -101,7 +102,7 @@ def listar_salas(request):
 @login_required(login_url='/login/')
 def alocar_sala(request):
     """
-    POST handler: aloca a sala para o médico logado, cria registro de cirurgia.
+    POST handler: aloca a sala para o médico logado, cria registro Cirurgia.
     Form fields: sala_numero, data (YYYY-MM-DD), horario (HH:MM), coren (opcional), paciente_pcpf (opcional)
     """
     if request.method != "POST":
@@ -134,17 +135,18 @@ def alocar_sala(request):
     try:
         data_obj = datetime.strptime(data_str, "%Y-%m-%d").date()
         horario_obj = datetime.strptime(horario_str, "%H:%M").time()
+        sala_numero_int = int(sala_numero)
     except Exception:
-        return HttpResponse("Formato de data/hora inválido.", status=400)
+        return HttpResponse("Formato de data/hora/sala inválido.", status=400)
 
     # checagem simples de conflito: já existe cirurgia com mesma sala/data/horário?
-    conflito = Cirurgia.objects.filter(fsala__numero=sala_numero, data=data_obj, horario=horario_obj).exists()
+    conflito = Cirurgia.objects.filter(fsala__numero=sala_numero_int, data=data_obj, horario=horario_obj).exists()
     if conflito:
         return HttpResponse("Conflito: já existe cirurgia nessa sala nesse horário.", status=400)
 
     try:
         with transaction.atomic():
-            sala = SalaCirurgia.objects.get(numero=sala_numero)
+            sala = SalaCirurgia.objects.select_for_update().get(numero=sala_numero_int)
 
             # resolve enfermeiro/paciente se fornecidos
             enfermeiro_obj = None
@@ -158,13 +160,13 @@ def alocar_sala(request):
                 if not paciente_obj:
                     return HttpResponse("Paciente não encontrado (CPF inválido).", status=404)
 
-            # marca sala (foreignkeys aceitam objetos)
+            # Atualiza sala: atribui médico e (opcional) enfermeiro, marca ocupado
             sala.fmedico = medico
             sala.fenfermeiro = enfermeiro_obj
             sala.status = "ocupado"
             sala.save()
 
-            # cria a cirurgia
+            # cria a cirurgia (registro)
             Cirurgia.objects.create(
                 horario=horario_obj,
                 data=data_obj,

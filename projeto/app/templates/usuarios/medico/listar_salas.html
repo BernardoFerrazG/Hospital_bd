@@ -1,30 +1,67 @@
-{% extends 'base.html' %}
-{% block content %}
+{% extends "base.html" %}
+{% block conteudo %}
 <div class="container py-4">
-  <h2>Salas de Cirurgia</h2>
-  <a href="{% url 'home_med' %}" class="btn btn-secondary mb-3">Voltar</a>
-  <table class="table table-sm">
-    <thead>
-      <tr>
-        <th>Nº</th><th>Departamento</th><th>Médico (CRM)</th><th>Enfermeiro (COREN)</th><th>Status</th><th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for sala in salas %}
-      <tr>
-        <td>{{ sala.numero }}</td>
-        <td>{{ sala.departamento }}</td>
-        <td>{{ sala.fmedico }}</td>
-        <td>{{ sala.fenfermeiro }}</td>
-        <td>{{ sala.status }}</td>
-        <td>
-          <a href="{% url 'alocar_sala' sala.numero %}" class="btn btn-sm btn-primary">Abrir</a>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6">Nenhuma sala encontrada.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <h2>Alocação de Salas de Cirurgia</h2>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Salas disponíveis</h4>
+      {% if salas %}
+        <ul class="list-group">
+          {% for sala in salas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Sala #{{ sala.numero }} — {{ sala.departamento|default:"(sem depto)" }}
+              <span class="badge bg-success">disponível</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="alert alert-secondary">Nenhuma sala disponível no momento.</div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-6">
+      <h4>Reservar uma sala</h4>
+      <form method="post" action="{% url 'alocar_sala' %}">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="sala_numero" class="form-label">Sala</label>
+          <select id="sala_numero" name="sala_numero" class="form-select" required>
+            <option value="">Selecione...</option>
+            {% for sala in salas %}
+            <option value="{{ sala.numero }}">Sala #{{ sala.numero }} — {{ sala.departamento|default:"(sem depto)" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="data" class="form-label">Data</label>
+          <input id="data" name="data" type="date" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="horario" class="form-label">Horário</label>
+          <input id="horario" name="horario" type="time" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="coren" class="form-label">Enfermeiro (opcional)</label>
+          <select id="coren" name="coren" class="form-select">
+            <option value="">Nenhum</option>
+            {% for en in enfermeiros %}
+              <option value="{{ en.coren }}">{{ en.coren }} — {{ en.ecpf_id }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="paciente_pcpf" class="form-label">Paciente (CPF) (opcional)</label>
+          <input id="paciente_pcpf" name="paciente_pcpf" type="text" class="form-control" placeholder="CPF do paciente (opcional)">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Reservar sala</button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
