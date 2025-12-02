@@ -1,6 +1,6 @@
 from django.urls import path
 from app import views
-from app.medico.views import listar_salas, alocar_sala
+from app.medico.views import listar_salas, alocar_sala, listar_leitos, alocar_leito
 
 urlpatterns = [
 
@@ -25,4 +25,7 @@ urlpatterns = [
 
     path('medico/salas/', listar_salas, name='listar_salas'),
     path('medico/salas/alocar/', alocar_sala, name='alocar_sala'),
+
+    path('medico/leitos/', listar_leitos, name='listar_leitos'),
+    path('medico/leitos/alocar/', alocar_leito, name='alocar_leito'),
 ]

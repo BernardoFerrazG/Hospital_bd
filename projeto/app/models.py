@@ -127,7 +127,10 @@ class FuncionarioTrabalhaEm(models.Model):
 
 class SalaCirurgia(models.Model):
     numero = models.AutoField(primary_key=True)   # SERIAL
-    departamento = models.CharField(max_length=50, null=True, blank=True)
+    departamento = models.ForeignKey(
+        'Departamento', db_column='departamento',
+        on_delete=models.SET_NULL, null=True, blank=True, to_field='dnome'
+    )
 
     fmedico = models.ForeignKey(
         "Medico",
