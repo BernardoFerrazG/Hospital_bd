@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+  <h2>Leitos — Alocar após cirurgia</h2>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h5>Leitos cirúrgicos disponíveis</h5>
+      {% if leitos_cir %}
+        <ul class="list-group mb-3">
+          {% for l in leitos_cir %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Leito #{{ l.numero }} — {{ l.departamento|default:"(sem depto)" }}
+              <span class="badge bg-success">disponível</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="alert alert-secondary">Nenhum leito cirúrgico disponível.</div>
+      {% endif %}
+
+      <h5>Leitos UTI disponíveis</h5>
+      {% if leitos_uti %}
+        <ul class="list-group">
+          {% for l in leitos_uti %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Leito UTI #{{ l.numero }} — {{ l.departamento|default:"(sem depto)" }}
+              <span class="badge bg-success">disponível</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="alert alert-secondary">Nenhum leito UTI disponível.</div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-6">
+      <h5>Alocar leito</h5>
+      <form method="post" action="{% url 'alocar_leito' %}">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Tipo</label>
+          <select name="tipo" class="form-select" required>
+            <option value="">Selecione...</option>
+            <option value="cirurgico">Leito cirúrgico</option>
+            <option value="uti">Leito UTI</option>
+          </select>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Número do leito</label>
+          <input name="leito_numero" class="form-control" required>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Paciente (CPF)</label>
+          <input name="paciente_pcpf" class="form-control" value="{{ paciente_prefill|default:'' }}" required>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Enfermeiro (COREN) — opcional</label>
+          <input name="coren" class="form-control" placeholder="COREN (opcional)">
+        </div>
+
+        <button class="btn btn-primary">Alocar leito</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

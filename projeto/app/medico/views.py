@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
-from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCirurgia, Cirurgia
+from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCirurgia, Cirurgia, LeitoCirurgico, LeitoUTI
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
+from django.contrib import messages
 
 
 
@@ -115,21 +116,25 @@ def alocar_sala(request):
     paciente_pcpf = request.POST.get("paciente_pcpf") or None
 
     if not (sala_numero and data_str and horario_str):
-        return HttpResponse("Preencha sala, data e horário.", status=400)
+        messages.error(request, "Preencha sala, data e horário.")
+        return redirect(reverse("listar_salas"))
 
-    # identifica médico logado (mesma lógica que você usa no login)
+    # identifica médico logado
     username = request.user.username
     pessoa = Pessoa.objects.filter(cpf=username).first() or Pessoa.objects.filter(nome=username).first()
     if not pessoa:
-        return HttpResponse("Usuário não registrado na tabela Pessoa.", status=404)
+        messages.error(request, "Usuário não registrado na tabela Pessoa.")
+        return redirect(reverse("listar_salas"))
 
     funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
     if not funcionario:
-        return HttpResponse("Usuário não encontrado como funcionário.", status=404)
+        messages.error(request, "Usuário não encontrado como funcionário.")
+        return redirect(reverse("listar_salas"))
 
     medico = Medico.objects.filter(mcpf=funcionario).first()
     if not medico:
-        return HttpResponse("Usuário não é um médico.", status=403)
+        messages.error(request, "Usuário não é um médico.")
+        return redirect(reverse("listar_salas"))
 
     # parse data/horario
     try:
@@ -137,12 +142,14 @@ def alocar_sala(request):
         horario_obj = datetime.strptime(horario_str, "%H:%M").time()
         sala_numero_int = int(sala_numero)
     except Exception:
-        return HttpResponse("Formato de data/hora/sala inválido.", status=400)
+        messages.error(request, "Formato de data/hora/sala inválido.")
+        return redirect(reverse("listar_salas"))
 
     # checagem simples de conflito: já existe cirurgia com mesma sala/data/horário?
     conflito = Cirurgia.objects.filter(fsala__numero=sala_numero_int, data=data_obj, horario=horario_obj).exists()
     if conflito:
-        return HttpResponse("Conflito: já existe cirurgia nessa sala nesse horário.", status=400)
+        messages.error(request, "Conflito: já existe cirurgia nessa sala nesse horário.")
+        return redirect(reverse("listar_salas"))
 
     try:
         with transaction.atomic():
@@ -154,11 +161,13 @@ def alocar_sala(request):
             if coren:
                 enfermeiro_obj = Enfermeiro.objects.filter(coren=coren).first()
                 if not enfermeiro_obj:
-                    return HttpResponse("Enfermeiro não encontrado (COREN inválido).", status=404)
+                    messages.error(request, "Enfermeiro não encontrado (COREN inválido).")
+                    return redirect(reverse("listar_salas"))
             if paciente_pcpf:
                 paciente_obj = Paciente.objects.filter(pcpf=paciente_pcpf).first()
                 if not paciente_obj:
-                    return HttpResponse("Paciente não encontrado (CPF inválido).", status=404)
+                    messages.error(request, "Paciente não encontrado (CPF inválido).")
+                    return redirect(reverse("listar_salas"))
 
             # Atualiza sala: atribui médico e (opcional) enfermeiro, marca ocupado
             sala.fmedico = medico
@@ -176,8 +185,91 @@ def alocar_sala(request):
                 fenfermeiro=enfermeiro_obj
             )
     except SalaCirurgia.DoesNotExist:
-        return HttpResponse("Sala não encontrada.", status=404)
+        messages.error(request, "Sala não encontrada.")
+        return redirect(reverse("listar_salas"))
     except Exception as e:
-        return HttpResponse(f"Erro ao alocar sala: {e}", status=500)
+        messages.error(request, f"Erro ao alocar sala: {e}")
+        return redirect(reverse("listar_salas"))
 
+    messages.success(request, f"Cirurgia agendada e sala #{sala_numero_int} reservada.")
+    # se tinha paciente, encaminha para alocação de leito (preenchendo querystring),
+    # senão volta para listar salas.
+    if paciente_pcpf:
+        return redirect(f"{reverse('listar_leitos')}?paciente={paciente_pcpf}")
     return redirect(reverse("listar_salas"))
+
+
+
+@login_required(login_url='/login/')
+def listar_leitos(request):
+    """
+    Lista leitos cirúrgicos e de UTI disponíveis (status='disponivel') e
+    exibe formulário para alocar um leito ao paciente.
+    Opcional: receber ?paciente=CPF para pré-preencher.
+    """
+    leitos_cir = LeitoCirurgico.objects.filter(status__iexact='disponivel').order_by('numero')
+    leitos_uti = LeitoUTI.objects.filter(status__iexact='disponivel').order_by('numero')
+    paciente_prefill = request.GET.get('paciente')
+    return render(request, "usuarios/medico/listar_leitos.html", {
+        "leitos_cir": leitos_cir,
+        "leitos_uti": leitos_uti,
+        "paciente_prefill": paciente_prefill,
+    })
+
+
+@login_required(login_url='/login/')
+def alocar_leito(request):
+    """
+    POST: aloca um leito cirurgico ou UTI para um paciente.
+    fields: tipo ('cirurgico'|'uti'), leito_numero, paciente_pcpf, coren (opcional)
+    """
+    if request.method != "POST":
+        return HttpResponse("Método inválido", status=405)
+
+    tipo = request.POST.get("tipo")
+    leito_numero = request.POST.get("leito_numero")
+    paciente_pcpf = request.POST.get("paciente_pcpf")
+    coren = request.POST.get("coren") or None
+
+    if not (tipo and leito_numero and paciente_pcpf):
+        return HttpResponse("Preencha tipo, leito e cpf do paciente.", status=400)
+
+    try:
+        paciente = Paciente.objects.filter(pcpf=paciente_pcpf).first()
+        if not paciente:
+            return HttpResponse("Paciente não encontrado.", status=404)
+
+        enfermeiro_obj = None
+        if coren:
+            enfermeiro_obj = Enfermeiro.objects.filter(coren=coren).first()
+            if not enfermeiro_obj:
+                return HttpResponse("Enfermeiro não encontrado (COREN inválido).", status=404)
+
+        leito_numero_int = int(leito_numero)
+    except Exception:
+        return HttpResponse("Dados inválidos.", status=400)
+
+    try:
+        with transaction.atomic():
+            if tipo == "cirurgico":
+                leito = LeitoCirurgico.objects.select_for_update().get(numero=leito_numero_int)
+            elif tipo == "uti":
+                leito = LeitoUTI.objects.select_for_update().get(numero=leito_numero_int)
+            else:
+                return HttpResponse("Tipo de leito inválido.", status=400)
+
+            if leito.status and leito.status.lower() == 'ocupado':
+                return HttpResponse("Leito já ocupado.", status=400)
+
+            leito.fpaciente = paciente
+            if enfermeiro_obj:
+                leito.fenfermeiro = enfermeiro_obj
+            leito.status = "ocupado"
+            leito.save()
+    except (LeitoCirurgico.DoesNotExist, LeitoUTI.DoesNotExist):
+        return HttpResponse("Leito não encontrado.", status=404)
+    except Exception as e:
+        return HttpResponse(f"Erro ao alocar leito: {e}", status=500)
+
+    # volta pra lista (ou para a página da cirurgia, se quiser)
+    return redirect(reverse("listar_leitos"))
