@@ -1,6 +1,6 @@
 from django.db import models
 
-
+# =============== PESSOA ===============
 class Pessoa(models.Model):
     cpf = models.CharField(primary_key=True, max_length=11)
     nome = models.CharField(max_length=100)
@@ -8,19 +8,19 @@ class Pessoa(models.Model):
     telefone = models.CharField(max_length=20)
     email = models.CharField(max_length=100)
     data_nascimento = models.DateField()
+    senha = models.CharField(max_length=256, null=True)  # você adicionou via ALTER TABLE
 
     class Meta:
-        managed = False  # Django não cria nem altera a tabela
-        db_table = 'pessoa'  # nome exato no banco
+        managed = False
+        db_table = 'pessoa'
 
-
-
+# =============== FUNCIONARIO ===============
 class Funcionario(models.Model):
     fcpf = models.OneToOneField(
         Pessoa,
+        primary_key=True,
         on_delete=models.CASCADE,
-        db_column='fcpf',
-        primary_key=True
+        db_column='fcpf'
     )
     salario = models.DecimalField(max_digits=10, decimal_places=2)
     horas_trabalhadas = models.DecimalField(max_digits=5, decimal_places=2)
@@ -29,12 +29,10 @@ class Funcionario(models.Model):
         managed = False
         db_table = 'funcionario'
 
-
-
 class Medico(models.Model):
     crm = models.CharField(primary_key=True, max_length=20)
     mcpf = models.OneToOneField(
-        Funcionario, to_field='fcpf',
+        Funcionario,
         on_delete=models.CASCADE,
         db_column='mcpf'
     )
@@ -42,12 +40,14 @@ class Medico(models.Model):
     class Meta:
         managed = False
         db_table = 'medico'
-        
+
+    def __str__(self):
+        return self.crm
+    
 class Enfermeiro(models.Model):
-    coren = models.CharField(primary_key=True, max_length=20)
+    coren = models.CharField(primary_key=True, max_length=20, db_column='coren')
     ecpf = models.OneToOneField(
         Funcionario,
-        to_field='fcpf',
         on_delete=models.CASCADE,
         db_column='ecpf'
     )
@@ -57,206 +57,159 @@ class Enfermeiro(models.Model):
         db_table = 'enfermeiro'
 
     def __str__(self):
-        return f"{self.coren} - {self.ecpf_id}"
+        return self.coren
 
 
+
+# =============== ADMINISTRADOR ===============
 class Administrador(models.Model):
     acpf = models.OneToOneField(
         Funcionario,
-        to_field='fcpf',
+        primary_key=True,
         on_delete=models.CASCADE,
-        db_column='acpf',
-        primary_key=True
+        db_column='acpf'
     )
 
     class Meta:
         managed = False
         db_table = 'administrador'
 
-    def __str__(self):
-        return f"Administrador (CPF func): {self.acpf_id}"
-
-
-class Paciente(models.Model):
-    pcpf = models.OneToOneField(
-        Pessoa,
-        to_field='cpf',
-        on_delete=models.CASCADE,
-        db_column='pcpf',
-        primary_key=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = 'paciente'
-
-    def __str__(self):
-        return f"Paciente (CPF): {self.pcpf_id}"
-
-
-        
+# =============== DEPARTAMENTO ===============
 class Departamento(models.Model):
     dnome = models.CharField(primary_key=True, max_length=50)
-    cpf_administrador = models.CharField(max_length=11, unique=True)
+    cpf_administrador = models.OneToOneField(
+        Administrador,
+        on_delete=models.CASCADE,
+        db_column='cpf_administrador'
+    )
 
     class Meta:
         managed = False
         db_table = 'departamento'
 
-
-class FuncionarioTrabalhaEm(models.Model):
-    cpf_funcionario = models.OneToOneField(
-        Funcionario,
-        on_delete=models.CASCADE,
-        db_column='cpf_funcionario',
-        primary_key=True
-    )
-    nome_departamento = models.ForeignKey(
-        Departamento,
-        on_delete=models.CASCADE,
-        db_column='nome_departamento'
-    )
-    data_inicio = models.DateField(null=True, blank=True)
-    data_fim = models.DateField(null=True, blank=True)
+class LeitoCirurgico(models.Model):
+    numero = models.AutoField(primary_key=True)
+    departamento = models.CharField(max_length=50, null=True)
+    fenfermeiro = models.CharField(max_length=20, null=True)
+    fpaciente = models.CharField(max_length=11, null=True)
+    status = models.CharField(max_length=20, default="Disponível")
 
     class Meta:
-        managed = False
-        db_table = 'funcionario_trabalha_em'
-        
+        db_table = 'leito_cirurgico'
+
+class LeitoUTI(models.Model):
+    numero = models.AutoField(primary_key=True)
+    departamento = models.CharField(max_length=50, null=True)
+    fenfermeiro = models.CharField(max_length=20, null=True)
+    fpaciente = models.CharField(max_length=11, null=True)
+    status = models.CharField(max_length=20, default="Disponível")
+
+    class Meta:
+        db_table = 'leito_uti'
 
 
-class SalaCirurgia(models.Model):
-    numero = models.AutoField(primary_key=True)   # SERIAL
+class Consultorio(models.Model):
+
+    andar = models.IntegerField(primary_key=True)
+    numero = models.IntegerField()
+
     departamento = models.ForeignKey(
-        'Departamento', db_column='departamento',
-        on_delete=models.SET_NULL, null=True, blank=True, to_field='dnome'
+        Departamento,
+        on_delete=models.CASCADE,
+        db_column="departamento",
+        null=True,
+        blank=True
     )
 
     fmedico = models.ForeignKey(
-        "Medico",
-        to_field="crm",
+        'Medico',
+        on_delete=models.SET_NULL,
         db_column="fmedico",
         null=True,
-        blank=True,
-        on_delete=models.SET_NULL
+        blank=True
     )
 
-    fenfermeiro = models.ForeignKey(
-        "Enfermeiro",
-        to_field="coren",
-        db_column="fenfermeiro",
+    status = models.CharField(max_length=20)
+
+    class Meta:
+        managed = False
+        db_table = "consultorio"
+        unique_together = (("andar", "numero"),)
+
+    def __str__(self):
+        return f"Consultório {self.numero} (Andar {self.andar})"
+
+class SalaCirurgia(models.Model):
+    numero = models.AutoField(primary_key=True)  # SERIAL PRIMARY KEY no banco
+
+    departamento = models.ForeignKey(
+        Departamento,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL
+        db_column="departamento"
     )
 
-    status = models.CharField(max_length=20, null=True, blank=True)
+    fmedico = models.ForeignKey(
+        Medico,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="fmedico"
+    )
+
+    fenfermeiro = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        db_column="fenfermeiro"
+    )  
+    # Ou use um ForeignKey para ENFERMEIRO caso você tenha o model
+
+    status = models.CharField(max_length=20)
 
     class Meta:
         managed = False
         db_table = "sala_cirurgia"
 
+    def __str__(self):
+        return f"Sala {self.numero}"
 
-class LeitoCirurgico(models.Model):
-    numero = models.AutoField(primary_key=True)  # SERIAL
-    departamento = models.CharField(max_length=50, null=True, blank=True)
-
-    fenfermeiro = models.ForeignKey(
-        "Enfermeiro",
-        to_field="coren",
-        db_column="fenfermeiro",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
+class MedicoTrabalhaConsultorio(models.Model):
+    crm_medico = models.OneToOneField(
+        Medico,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        db_column='crm_medico'
     )
 
-    fpaciente = models.ForeignKey(
-        "Paciente",
-        to_field="pcpf",
-        db_column="fpaciente",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
+    andar = models.IntegerField()
+    numero = models.IntegerField()
 
-    status = models.CharField(max_length=20, null=True, blank=True)
+    data_inicio = models.DateField()
+    data_fim = models.DateField()
 
     class Meta:
         managed = False
-        db_table = "leito_cirurgico"
+        db_table = '"MEDICO_TRABALHA_CONSULTORIO"'
 
-
-class LeitoUTI(models.Model):
-    numero = models.AutoField(primary_key=True)  # SERIAL
-    departamento = models.CharField(max_length=50, null=True, blank=True)
-
-    fenfermeiro = models.ForeignKey(
-        "Enfermeiro",
-        to_field="coren",
-        db_column="fenfermeiro",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
+class EnfermeiroTrabalhaConsultorio(models.Model):
+    coren_enfermeiro = models.OneToOneField(
+        Enfermeiro,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        db_column='coren_enfermeiro'
     )
 
-    fpaciente = models.ForeignKey(
-        "Paciente",
-        to_field="pcpf",
-        db_column="fpaciente",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
+    andar = models.IntegerField()
+    numero = models.IntegerField()
 
-    status = models.CharField(max_length=20, null=True, blank=True)
+    data_inicio = models.DateField()
+    data_fim = models.DateField()
 
     class Meta:
         managed = False
-        db_table = "leito_uti"
+        db_table = '"ENFERMEIRO_TRABALHA_CONSULTORIO"'
 
 
-# (Opcional: model Cirurgia se desejar registrar a cirurgia ao alocar)
-class Cirurgia(models.Model):
-    nmr_cirurgia = models.AutoField(primary_key=True)
-    horario = models.TimeField(null=True, blank=True)
-    data = models.DateField(null=True, blank=True)
 
-    fpaciente = models.ForeignKey(
-        "Paciente",
-        to_field="pcpf",
-        db_column="fpaciente",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
-
-    fmedico = models.ForeignKey(
-        "Medico",
-        to_field="crm",
-        db_column="fmedico",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
-
-    fsala = models.ForeignKey(
-        "SalaCirurgia",
-        to_field="numero",
-        db_column="fsala",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
-
-    fenfermeiro = models.ForeignKey(
-        "Enfermeiro",
-        to_field="coren",
-        db_column="fenfermeiro",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
-
-    class Meta:
-        managed = False
-        db_table = "cirurgia"
