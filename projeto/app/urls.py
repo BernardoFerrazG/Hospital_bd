@@ -12,4 +12,9 @@ urlpatterns = [
     path("medicos_adm/", views.medicos_adm, name="medicos_adm"),
     path("desalocar_medico/<str:crm>/", views.desalocar_medico, name="desalocar_medico"),
     path("desalocar_enfermeiro/<str:coren>/", views.desalocar_enfermeiro, name="desalocar_enfermeiro"),
+    path("salas/remover/<int:numero>/", views.remover_sala, name="remover_sala"),
+    path("consultorios/remover/<int:numero>/", views.remover_consultorio, name="remover_consultorio"),
+    path("leitos/cirurgia/remover/<int:leito_numero>/", views.remover_leito_cirurgia, name="remover_leito_cirurgia"),
+    path("leitos/uti/remover/<int:leito_numero>/", views.remover_leito_uti, name="remover_leito_uti"),
+
 ]
