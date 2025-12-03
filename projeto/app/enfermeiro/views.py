@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.db import transaction
 from ..models import Pessoa, Funcionario, Enfermeiro, Departamento, FuncionarioTrabalhaEm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 
 
 
@@ -106,7 +107,9 @@ def home_enf(request):
 def enfermeiro_alocacoes(request):
     # Monta lista de alocações para o enfermeiro logado compatível com o template
     from types import SimpleNamespace
-    from django.contrib.auth.models import User
+
+    # Use the configured user model
+    User = get_user_model()
 
     # Tenta encontrar a Pessoa associada ao usuário (mesma lógica do login)
     username = request.user.username if request.user and request.user.is_authenticated else None
@@ -139,19 +142,40 @@ def enfermeiro_alocacoes(request):
         local_nome = a.nome_departamento.dnome if a.nome_departamento else None
         local = SimpleNamespace(nome=local_nome)
 
-        # tenta inferir quem fez a alocação a partir do departamento (campo cpf_administrador)
+        # tenta inferir quem fez a alocação com múltiplos fallbacks
         admin_username = "—"
+
+        # 1) Se o departamento tem um cpf_administrador, preferimos encontrá-lo
         if a.nome_departamento and getattr(a.nome_departamento, 'cpf_administrador', None):
             cpf_admin = a.nome_departamento.cpf_administrador
-            admin_pessoa = Pessoa.objects.filter(cpf=cpf_admin).first()
-            if admin_pessoa:
-                admin_user = User.objects.filter(username=admin_pessoa.nome).first()
-                if admin_user:
-                    admin_username = admin_user.username
-                else:
-                    admin_username = admin_pessoa.nome
+            # primeiro, veja se existe um User com username igual ao CPF (username pode ser CPF em alguns fluxos)
+            admin_user = User.objects.filter(username=cpf_admin).first()
+            if admin_user:
+                admin_username = admin_user.username
             else:
-                admin_username = cpf_admin
+                # tenta mapear CPF -> Pessoa -> User (username == pessoa.nome)
+                admin_pessoa = Pessoa.objects.filter(cpf=cpf_admin).first()
+                if admin_pessoa:
+                    admin_user2 = User.objects.filter(username=admin_pessoa.nome).first()
+                    if admin_user2:
+                        admin_username = admin_user2.username
+                    else:
+                        admin_username = admin_pessoa.nome
+                else:
+                    admin_username = cpf_admin
+        else:
+            # 2) Sem cpf_administrador, tente heurísticas baseadas no próprio funcionário/pessoa
+            # a) usuário com username == CPF do funcionário
+            func_cpf = funcionario.fcpf_id if hasattr(funcionario, 'fcpf_id') else None
+            if func_cpf:
+                user_by_cpf = User.objects.filter(username=func_cpf).first()
+                if user_by_cpf:
+                    admin_username = user_by_cpf.username
+            # b) usuário com username == nome da pessoa
+            if admin_username == "—":
+                user_by_name = User.objects.filter(username=pessoa.nome).first()
+                if user_by_name:
+                    admin_username = user_by_name.username
 
         alocado_por = SimpleNamespace(usuario=SimpleNamespace(username=admin_username))
 

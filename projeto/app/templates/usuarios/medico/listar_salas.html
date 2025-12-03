@@ -37,6 +37,7 @@
                   &mdash;
                 {% endif %}
               </div>
+            </div>
 
             {% if sala.status and sala.status|lower == "ocupado" %}
               <span class="badge bg-danger">ocupado</span>
@@ -51,45 +52,46 @@
 
       <h5 class="mt-4">Próximas cirurgias</h5>
       <ul class="list-group">
-        {% comment %} Mostramos últimos 8 agendamentos; se Cirurgia estiver vazio, mostra mensagem {% endcomment %}
-        {% with cirurgias=Cirurgia.objects.all|slice:":8" %}
-          {% if cirurgias %}
-            {% for c in cirurgias %}
-              <li class="list-group-item">
-                <div>
-                  <strong>
-                    Sala
-                    {% if c.fsala %}
-                      #{{ c.fsala.numero }}
-                    {% else %}
-                      ?
-                    {% endif %}
-                  </strong>
-                  — {{ c.data }} {{ c.horario }}
-                </div>
-
-                <div class="small text-muted">
-                  Med:
-                  {% if c.fmedico %}
-                    {{ c.fmedico.crm }}
+        {% if cirurgias %}
+          {% for c in cirurgias %}
+            <li class="list-group-item">
+              <div>
+                <strong>
+                  Sala
+                  {% if c.fsala %}
+                    #{{ c.fsala.numero }}
                   {% else %}
-                    &mdash;
+                    ?
                   {% endif %}
-                  &nbsp;·&nbsp;
-                  Paciente:
-                  {% if c.fpaciente %}
-                    {{ c.fpaciente.pcpf }}
-                  {% else %}
-                    &mdash;
-                  {% endif %}
-                </div>
-              </li>
+                </strong>
+                — {{ c.data }} {{ c.horario }}
+              </div>
 
-            {% endfor %}
-          {% else %}
-            <li class="list-group-item text-muted">Nenhuma cirurgia agendada.</li>
-          {% endif %}
-        {% endwith %}
+              <div class="small text-muted">
+                Med:
+                {% if c.fmedico %}
+                  {{ c.fmedico.crm }}
+                {% else %}
+                  &mdash;
+                {% endif %}
+                &nbsp;·&nbsp;
+                Paciente:
+                {% if c.fpaciente %}
+                  {# tenta mostrar nome se relacionado corretamente #}
+                  {% if c.fpaciente.pcpf and c.fpaciente.pcpf.nome %}
+                    {{ c.fpaciente.pcpf.nome }} ({{ c.fpaciente.pcpf }})
+                  {% else %}
+                    {{ c.fpaciente }}
+                  {% endif %}
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        {% else %}
+          <li class="list-group-item text-muted">Nenhuma cirurgia agendada.</li>
+        {% endif %}
       </ul>
     </div>
 
@@ -138,6 +140,12 @@
             <div class="mb-3">
               <label class="form-label">Paciente (CPF) — opcional</label>
               <input type="text" name="paciente_pcpf" class="form-control" placeholder="CPF do paciente" value="{{ request.GET.paciente|default:'' }}">
+            </div>
+
+            <!-- CHECKBOX: precisa de leito? -->
+            <div class="mb-3 form-check">
+              <input class="form-check-input" type="checkbox" name="needs_leito" id="needs_leito">
+              <label class="form-check-label" for="needs_leito">Paciente precisa de leito após a cirurgia?</label>
             </div>
 
             <div class="d-grid">

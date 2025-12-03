@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
-from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCirurgia, Cirurgia, LeitoCirurgico, LeitoUTI
+from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCirurgia, Cirurgia, LeitoCirurgico, LeitoUTI, Consulta
 from django.contrib.auth.decorators import login_required
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib import messages
 
 
@@ -88,23 +88,28 @@ def home_med(request):
 
 @login_required(login_url='/login/')
 def listar_salas(request):
-    """
-    Lista somente salas disponíveis e mostra formulário para reservar.
-    """
-    # só salas com status 'disponivel' (case-insensitive)
-    salas = SalaCirurgia.objects.filter(status__iexact='disponivel').order_by('numero')
-    enfermeiros = Enfermeiro.objects.all().order_by('ecpf')  # traz todos (para atribuir)
+
+    salas = SalaCirurgia.objects.order_by('numero')
+    enfermeiros = Enfermeiro.objects.all().order_by('ecpf')
+
+    cirurgias = Cirurgia.objects.order_by('data', 'horario')[:8]
+
     return render(request, "usuarios/medico/listar_salas.html", {
         "salas": salas,
         "enfermeiros": enfermeiros,
+        "cirurgias": cirurgias,
     })
+
 
 
 @login_required(login_url='/login/')
 def alocar_sala(request):
     """
-    POST handler: aloca a sala para o médico logado, cria registro Cirurgia.
-    Form fields: sala_numero, data (YYYY-MM-DD), horario (HH:MM), coren (opcional), paciente_pcpf (opcional)
+    POST: aloca a sala, cria registro Cirurgia.
+    Regras:
+      - não permite mais de UMA cirurgia por SALA na MESMA DATA;
+      - não permite alocar se sala.status == 'ocupado' (case-insensitive).
+    Aceita o campo opcional 'needs_leito' (checkbox).
     """
     if request.method != "POST":
         return HttpResponse("Método inválido", status=405)
@@ -114,6 +119,12 @@ def alocar_sala(request):
     horario_str = request.POST.get("horario")
     coren = request.POST.get("coren") or None
     paciente_pcpf = request.POST.get("paciente_pcpf") or None
+
+    # checkbox indicando necessidade de leito
+    needs_leito_raw = request.POST.get("needs_leito")
+    needs_leito = False
+    if needs_leito_raw:
+        needs_leito = str(needs_leito_raw).lower() in ("on", "1", "true", "yes")
 
     if not (sala_numero and data_str and horario_str):
         messages.error(request, "Preencha sala, data e horário.")
@@ -145,15 +156,20 @@ def alocar_sala(request):
         messages.error(request, "Formato de data/hora/sala inválido.")
         return redirect(reverse("listar_salas"))
 
-    # checagem simples de conflito: já existe cirurgia com mesma sala/data/horário?
-    conflito = Cirurgia.objects.filter(fsala__numero=sala_numero_int, data=data_obj, horario=horario_obj).exists()
-    if conflito:
-        messages.error(request, "Conflito: já existe cirurgia nessa sala nesse horário.")
-        return redirect(reverse("listar_salas"))
-
     try:
         with transaction.atomic():
             sala = SalaCirurgia.objects.select_for_update().get(numero=sala_numero_int)
+
+            # não permite alocar se a sala já estiver marcada como ocupada
+            if sala.status and str(sala.status).strip().lower() == "ocupado":
+                messages.error(request, "Esta sala já está marcada como ocupada e não pode receber outra cirurgia.")
+                return redirect(reverse("listar_salas"))
+
+            # checagem estrita: não permita outra cirurgia para a mesma sala na mesma DATA
+            conflito_data = Cirurgia.objects.filter(fsala__numero=sala_numero_int, data=data_obj).exists()
+            if conflito_data:
+                messages.error(request, "Conflito: já existe uma cirurgia agendada para esta sala nessa data.")
+                return redirect(reverse("listar_salas"))
 
             # resolve enfermeiro/paciente se fornecidos
             enfermeiro_obj = None
@@ -169,13 +185,12 @@ def alocar_sala(request):
                     messages.error(request, "Paciente não encontrado (CPF inválido).")
                     return redirect(reverse("listar_salas"))
 
-            # Atualiza sala: atribui médico e (opcional) enfermeiro, marca ocupado
+            # marcar sala e criar cirurgia
             sala.fmedico = medico
             sala.fenfermeiro = enfermeiro_obj
             sala.status = "ocupado"
             sala.save()
 
-            # cria a cirurgia (registro)
             Cirurgia.objects.create(
                 horario=horario_obj,
                 data=data_obj,
@@ -192,12 +207,12 @@ def alocar_sala(request):
         return redirect(reverse("listar_salas"))
 
     messages.success(request, f"Cirurgia agendada e sala #{sala_numero_int} reservada.")
-    # se tinha paciente, encaminha para alocação de leito (preenchendo querystring),
-    # senão volta para listar salas.
-    if paciente_pcpf:
-        return redirect(f"{reverse('listar_leitos')}?paciente={paciente_pcpf}")
-    return redirect(reverse("listar_salas"))
 
+    # Só redireciona para alocação de leito se o médico marcou explicitamente e há paciente informado.
+    if needs_leito and paciente_pcpf:
+        return redirect(f"{reverse('listar_leitos')}?paciente={paciente_pcpf}")
+
+    return redirect(reverse("listar_salas"))
 
 
 @login_required(login_url='/login/')
@@ -273,3 +288,206 @@ def alocar_leito(request):
 
     # volta pra lista (ou para a página da cirurgia, se quiser)
     return redirect(reverse("listar_leitos"))
+
+
+@login_required(login_url='/login/')
+def listar_consultas(request):
+    """
+    Lista as consultas do médico logado para uma data.
+    Por padrão usa hoje; aceita ?date=YYYY-MM-DD para ver outra data.
+    Mostra horário, paciente e consultório (andar/numero).
+    """
+    # identifica médico a partir do usuário (mesma mecânica que você já usa)
+    username = request.user.username
+    pessoa = Pessoa.objects.filter(cpf=username).first() or Pessoa.objects.filter(nome=username).first()
+    if not pessoa:
+        messages.error(request, "Usuário não registrado na tabela Pessoa.")
+        return redirect(reverse("home_med"))
+
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+    if not funcionario:
+        messages.error(request, "Usuário não encontrado como funcionário.")
+        return redirect(reverse("home_med"))
+
+    medico = Medico.objects.filter(mcpf=funcionario).first()
+    if not medico:
+        messages.error(request, "Usuário não é um médico.")
+        return redirect(reverse("home_med"))
+
+    # data desejada (querystring opcional)
+    date_str = request.GET.get('date')
+    if date_str:
+        try:
+            data_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except Exception:
+            data_obj = date.today()
+            messages.warning(request, "Formato de data inválido; mostrando hoje.")
+    else:
+        data_obj = date.today()
+
+    consultas = Consulta.objects.filter(fmedico=medico, data=data_obj).order_by('horario')
+
+    return render(request, "usuarios/medico/listar_consultas.html", {
+        "consultas": consultas,
+        "data": data_obj,
+    })
+
+@login_required(login_url='/auth/login/')
+def gerenciar_salas(request):
+    # identifica médico
+    username = request.user.username
+    pessoa = Pessoa.objects.filter(cpf=username).first() or Pessoa.objects.filter(nome=username).first()
+    if not pessoa:
+        messages.error(request, "Usuário não está registrado como Pessoa.")
+        return redirect(reverse("home_med"))
+
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+    if not funcionario:
+        messages.error(request, "Usuário não encontrado como funcionário.")
+        return redirect(reverse("home_med"))
+
+    medico = Medico.objects.filter(mcpf=funcionario).first()
+    if not medico:
+        messages.error(request, "Usuário não é um médico.")
+        return redirect(reverse("home_med"))
+
+    # salas alocadas a este médico (ordenadas)
+    salas = SalaCirurgia.objects.filter(fmedico=medico).order_by('numero')
+
+    # para cada sala, pegar próximas cirurgias futuras (data >= hoje)
+    today = date.today()
+    salas_with_cir = []
+    for sala in salas:
+        cir_list = list(Cirurgia.objects.filter(fsala=sala, data__gte=today).order_by('data', 'horario')[:5])
+        salas_with_cir.append((sala, cir_list))
+
+    # --- CORREÇÃO PRINCIPAL aqui ---
+    # pegar ids de pacientes que aparecem nas cirurgias do médico (fpaciente_id)
+    paciente_ids = Cirurgia.objects.filter(fmedico=medico).values_list('fpaciente_id', flat=True)
+    # filtra os pacientes por id (evita usar nomes de campo incorretos como 'cpf')
+    paciente_qs = Paciente.objects.filter(pk__in=[pid for pid in paciente_ids if pid])
+
+    # leitos ocupados relacionados a esses pacientes
+    leitos_cir_ocup = LeitoCirurgico.objects.filter(status__iexact='ocupado', fpaciente__in=paciente_qs).order_by('numero')
+    leitos_uti_ocup = LeitoUTI.objects.filter(status__iexact='ocupado', fpaciente__in=paciente_qs).order_by('numero')
+
+    return render(request, "usuarios/medico/gerenciar_salas.html", {
+        "salas_with_cir": salas_with_cir,
+        "leitos_cir_ocup": leitos_cir_ocup,
+        "leitos_uti_ocup": leitos_uti_ocup,
+    })
+
+
+
+@login_required(login_url='/auth/login/')
+def desalocar_sala(request):
+    """
+    Form esperado: POST com campo 'sala_numero' (número da sala) e checkbox 'cancel_cirurgias' (opcional).
+    Se cancelar cirurgias, remove cirurgias futuras daquela sala (apenas > hoje).
+    """
+    sala_numero = request.POST.get("sala_numero")
+    cancel = request.POST.get("cancel_cirurgias")  # 'on' se marcado
+
+    if not sala_numero:
+        messages.error(request, "Número da sala ausente.")
+        return redirect(reverse("gerenciar_salas"))
+
+    try:
+        sala_num = int(sala_numero)
+    except ValueError:
+        messages.error(request, "Número da sala inválido.")
+        return redirect(reverse("gerenciar_salas"))
+
+    # confirma médico logado (mesma lógica sua)
+    username = request.user.username
+    pessoa = Pessoa.objects.filter(cpf=username).first() or Pessoa.objects.filter(nome=username).first()
+    if not pessoa:
+        messages.error(request, "Usuário não cadastrado como Pessoa.")
+        return redirect(reverse("gerenciar_salas"))
+
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+    if not funcionario:
+        messages.error(request, "Usuário não é funcionário.")
+        return redirect(reverse("gerenciar_salas"))
+
+    medico = Medico.objects.filter(mcpf=funcionario).first()
+    if not medico:
+        messages.error(request, "Usuário não é médico.")
+        return redirect(reverse("gerenciar_salas"))
+
+    try:
+        with transaction.atomic():
+            sala = SalaCirurgia.objects.select_for_update().get(numero=sala_num)
+
+            # só permitir desalocar se a sala estiver atribuída ao médico logado
+            if sala.fmedico != medico:
+                messages.error(request, "Você não pode liberar esta sala (não está atribuída a você).")
+                return redirect(reverse("gerenciar_salas"))
+
+            # libera a sala (desassocia médico/enfermeiro e marca disponível)
+            sala.fmedico = None
+            sala.fenfermeiro = None
+            sala.status = "disponivel"
+            sala.save()
+
+            # se pediu cancelar cirurgias futuras, elimina registros de Cirurgia com data >= hoje
+            if cancel:
+                hoje = date.today()
+                deleted_count, _ = Cirurgia.objects.filter(fsala=sala, data__gte=hoje).delete()
+                # .delete() já remove relacionamentos; cuidado com cascades se tiver
+                if deleted_count:
+                    messages.info(request, f"{deleted_count} cirurgias futuras canceladas.")
+    except SalaCirurgia.DoesNotExist:
+        messages.error(request, "Sala não encontrada.")
+        return redirect(reverse("gerenciar_salas"))
+    except Exception as e:
+        messages.error(request, f"Erro ao liberar sala: {e}")
+        return redirect(reverse("gerenciar_salas"))
+
+    messages.success(request, f"Sala #{sala_num} liberada.")
+    return redirect(reverse("gerenciar_salas"))
+
+
+@login_required(login_url='/auth/login/')
+def liberar_leito(request):
+    if request.method != "POST":
+        return HttpResponse("Método inválido", status=405)
+
+    tipo = request.POST.get("tipo")
+    leito_numero = request.POST.get("leito_numero")
+
+    if not (tipo and leito_numero):
+        messages.error(request, "Dados incompletos para liberar leito.")
+        return redirect(reverse("gerenciar_salas"))
+
+    try:
+        leito_num = int(leito_numero)
+    except ValueError:
+        messages.error(request, "Número do leito inválido.")
+        return redirect(reverse("gerenciar_salas"))
+
+    try:
+        with transaction.atomic():
+            if tipo == "cirurgico":
+                leito = LeitoCirurgico.objects.select_for_update().get(numero=leito_num)
+            elif tipo == "uti":
+                leito = LeitoUTI.objects.select_for_update().get(numero=leito_num)
+            else:
+                messages.error(request, "Tipo de leito inválido.")
+                return redirect(reverse("gerenciar_salas"))
+
+            # limpa vínculo e marca disponível
+            leito.fpaciente = None
+            leito.fenfermeiro = None
+            leito.status = "disponivel"
+            leito.save()
+
+    except (LeitoCirurgico.DoesNotExist, LeitoUTI.DoesNotExist):
+        messages.error(request, "Leito não encontrado.")
+        return redirect(reverse("gerenciar_salas"))
+    except Exception as e:
+        messages.error(request, f"Erro ao liberar leito: {e}")
+        return redirect(reverse("gerenciar_salas"))
+
+    messages.success(request, f"Leito #{leito_num} liberado.")
+    return redirect(reverse("gerenciar_salas"))

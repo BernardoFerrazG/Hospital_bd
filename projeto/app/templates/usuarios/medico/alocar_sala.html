@@ -22,8 +22,8 @@
           <tr>
             <td>{{ sala.numero }}</td>
             <td>{{ sala.departamento|default:"-" }}</td>
-            <td>{{ sala.fmedico.crm if sala.fmedico else "—" }}</td>
-            <td>{{ sala.fenfermeiro.coren if sala.fenfermeiro else "—" }}</td>
+            <td>{% if sala.fmedico %}{{ sala.fmedico.crm }}{% else %}&mdash;{% endif %}</td>
+            <td>{% if sala.fenfermeiro %}{{ sala.fenfermeiro.coren }}{% else %}&mdash;{% endif %}</td>
             <td>{{ sala.status|default:"disponível" }}</td>
           </tr>
           {% empty %}
@@ -69,7 +69,13 @@
 
         <div class="mb-2">
           <label class="form-label">Paciente (CPF) — opcional</label>
-          <input type="text" name="paciente_pcpf" class="form-control" placeholder="somente números">
+          <input type="text" name="paciente_pcpf" class="form-control" placeholder="somente números" value="{{ request.GET.paciente|default:'' }}">
+        </div>
+
+        <!-- CHECKBOX: precisa de leito? -->
+        <div class="mb-3 form-check">
+          <input class="form-check-input" type="checkbox" name="needs_leito" id="needs_leito">
+          <label class="form-check-label" for="needs_leito">Paciente precisa de leito após a cirurgia?</label>
         </div>
 
         <button class="btn btn-primary">Alocar Sala</button>
