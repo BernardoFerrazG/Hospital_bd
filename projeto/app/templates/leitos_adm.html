@@ -51,13 +51,13 @@
 
             <div class="col-md-6">
               <label class="form-label">Código do Leito</label>
-              <input type="text" name="numero" class="form-control" placeholder="Ex: L-203" required />
+              <input type="text" name="numero" class="form-control" placeholder="Ex: 1" required />
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Tipo de Leito</label>
               <select name = "tipo" class="form-select" required>
-                <option>Escolha o tipo de leito</option>
+                <option>Selecione o Tipo de Leito</option>
                 <option>Cirurgia</option>
                 <option>UTI</option>
                 
@@ -92,29 +92,51 @@
           </thead>
 
           <tbody>
-            <!-- EXEMPLO DE LINHA -->
-            <tr>
-              <td>L-203</td>
-              <td>UTI</td>
-              <td><span class="badge bg-success">Disponível</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger">
-                  <i class="bi bi-trash"></i> Remover
-                </button>
-              </td>
-            </tr>
+  <!-- LEITOS CIRÚRGICOS -->
+            {% for leito in leitos_cirurgia %}
+              <tr>
+                <td>{{ leito.numero }}</td>
+                <td>Cirurgia</td>
+                <td>
+                  {% if leito.status == "Disponível" %}
+                    <span class="badge bg-success">Disponível</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">{{ leito.status }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'remover_leito_cirurgia' leito.numero %}" 
+                    class="btn btn-sm btn-danger"
+                    {% if leito.status != "Disponível" %}disabled{% endif %}>
+                    Remover
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
 
-            <tr>
-              <td>L-110</td>
-              <td>Enfermaria</td>
-              <td><span class="badge bg-warning text-dark">Ocupado</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger" disabled>
-                  <i class="bi bi-trash"></i> Remover
-                </button>
-              </td>
-            </tr>
+            <!-- LEITOS UTI -->
+            {% for leito in leitos_uti %}
+              <tr>
+                <td>{{ leito.numero }}</td>
+                <td>UTI</td>
+                <td>
+                  {% if leito.status == "Disponível" %}
+                    <span class="badge bg-success">Disponível</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">{{ leito.status }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'remover_leito_uti' leito.numero %}" 
+                    class="btn btn-sm btn-danger"
+                    {% if leito.status != "Disponível" %}disabled{% endif %}>
+                    Remover
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
           </tbody>
+
         </table>
 
       </div>
