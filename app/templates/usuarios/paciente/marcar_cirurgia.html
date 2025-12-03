@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Solicitar Cirurgia</h2>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <hr>
+    
+    <div class="row">
+        <div class="col-12 col-md-8">
+            <p class="text-muted">Preencha os detalhes da solicitação e o médico responsável entrará em contato para agendamento.</p>
+
+            <form method="POST" action="{% url 'marcar_cirurgia' %}">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="procedimento" class="form-label">Tipo de Procedimento:</label>
+                    <input type="text" id="procedimento" name="procedimento" class="form-control" placeholder="Ex: Cirurgia Cardíaca, Apendicectomia" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="medico_pref_cirurgia" class="form-label">Médico de Preferência:</label>
+                    <select id="medico_pref_cirurgia" name="fmedico_crm" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        {% for medico in medicos %}
+                            <option value="{{ medico.crm }}">
+                                Dr(a). {{ medico.mcpf.fcpf.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="observacoes" class="form-label">Observações Médicas:</label>
+                    <textarea id="observacoes" name="observacoes" class="form-control" rows="3" placeholder="Informações relevantes sobre a urgência ou histórico."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-danger">Enviar Solicitação de Cirurgia</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

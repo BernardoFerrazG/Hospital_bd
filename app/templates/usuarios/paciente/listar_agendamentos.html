@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-0">Minha Agenda Completa</h2>
+      <small class="text-muted">Olá, {{ pessoa.nome }}</small>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+  </div>
+
+  {# Bloco de Mensagens #}
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show shadow-sm" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row mb-5">
+    <div class="col-12">
+      <h5 class="text-primary mb-3 d-flex align-items-center">
+        <i class="bi bi-clipboard2-pulse me-2 fs-4"></i> Consultas Médicas
+      </h5>
+      
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% if consultas %}
+              {% for c in consultas %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                  
+                  <div>
+                    <div class="mb-1">
+                      <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong>
+                      <span class="text-muted mx-2">|</span>
+                      <i class="bi bi-clock me-1"></i> {{ c.horario|time:"H:i" }}
+                    </div>
+
+                    <div class="small text-muted mt-1">
+                      <span class="me-3 d-block d-md-inline">
+                        <i class="bi bi-person-badge me-1"></i>
+                        Médico: 
+                        {% if c.fmedico and c.fmedico.mcpf and c.fmedico.mcpf.fcpf %}
+                          Dr(a). {{ c.fmedico.mcpf.fcpf.nome }}
+                        {% else %}
+                          &mdash;
+                        {% endif %}
+                      </span>
+
+                      <span class="d-block d-md-inline mt-1 mt-md-0">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Local: 
+                        {% if c.numero %}
+                          Consultório {{ c.numero }} ({{ c.andar }}º Andar)
+                        {% else %}
+                          A definir
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="ms-3">
+                    {% now "Y-m-d" as hoje %}
+                    {% if c.data|date:"Y-m-d" < hoje %}
+                        <span class="badge bg-secondary rounded-pill">Realizada</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark rounded-pill">Consulta Agendada</span>
+                    {% endif %}
+                  </div>
+
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="list-group-item text-center py-4 text-muted">
+                <p class="mb-0">Nenhuma consulta encontrada.</p>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <h5 class="text-danger mb-3 d-flex align-items-center">
+        <i class="bi bi-heart-pulse me-2 fs-4"></i> Procedimentos Cirúrgicos
+      </h5>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% if cirurgias %}
+              {% for c in cirurgias %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                  
+                  <div>
+                    <div class="mb-1">
+                      <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong>
+                      <span class="text-muted mx-2">|</span>
+                      <i class="bi bi-clock me-1"></i> {{ c.horario|time:"H:i" }}
+                    </div>
+
+                    <div class="small text-muted mt-1">
+                      <span class="me-3 d-block d-md-inline">
+                        <i class="bi bi-person-badge-fill me-1"></i>
+                        Cirurgião: 
+                        {% if c.fmedico and c.fmedico.mcpf and c.fmedico.mcpf.fcpf %}
+                           Dr(a). {{ c.fmedico.mcpf.fcpf.nome }}
+                        {% else %}
+                           &mdash;
+                        {% endif %}
+                      </span>
+
+                      <span class="d-block d-md-inline mt-1 mt-md-0">
+                        <i class="bi bi-door-closed-fill me-1"></i>
+                        Local:
+                        {% if c.fsala %}
+                          Sala #{{ c.fsala.numero }}
+                          {% if c.fsala.departamento %}
+                             - {{ c.fsala.departamento.dnome }}
+                          {% endif %}
+                        {% else %}
+                          Não definido
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="ms-3">
+                    {% now "Y-m-d" as hoje %}
+                    {% if c.data|date:"Y-m-d" < hoje %}
+                        <span class="badge bg-secondary rounded-pill">Realizada</span>
+                    {% else %}
+                        <span class="badge bg-danger rounded-pill">Cirurgia Agendada</span>
+                    {% endif %}
+                  </div>
+
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="list-group-item text-center py-4 text-muted">
+                <p class="mb-0">Nenhuma cirurgia agendada.</p>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      
+      <div class="mt-4 alert alert-light border shadow-sm text-muted small">
+        <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+        <strong>Informação:</strong> Caso precise reagendar ou cancelar qualquer procedimento, entre em contato presencialmente ou pelo telefone da secretaria.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block conteudo %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-0">Histórico Médico Completo</h2>
+      <small class="text-muted">Eventos realizados até hoje, {{ pessoa.nome }}</small>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+  </div>
+
+  <div class="row">
+    
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-primary text-white">
+          <i class="bi bi-file-earmark-medical me-2"></i> Consultas Realizadas
+        </div>
+        <ul class="list-group list-group-flush">
+          {% if consultas_passadas %}
+            {% for c in consultas_passadas %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ c.data|date:"d/m/Y" }} às {{ c.horario|time:"H:i" }}</strong>
+                  
+                  <div class="small text-muted">
+                    Médico: Dr. {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}
+                  </div>
+
+                  <div class="small text-muted">
+                    Local: Consultório {{ c.numero }} (Andar {{ c.andar }})
+                  </div>
+                </div>
+                <span class="badge bg-success rounded-pill">
+                  <i class="bi bi-check-circle-fill me-1"></i> Realizada
+                </span>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li class="list-group-item text-muted text-center py-4">
+              Nenhuma consulta registrada no histórico.
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-danger text-white">
+          <i class="bi bi-heart-pulse-fill me-2"></i> Cirurgias e Procedimentos
+        </div>
+        <ul class="list-group list-group-flush">
+          {% if cirurgias_passadas %}
+            {% for c in cirurgias_passadas %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ c.data|date:"d/m/Y" }} às {{ c.horario|time:"H:i" }}</strong>
+                  
+                  <div class="small text-muted">
+                    Cirurgião: Dr. {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}
+                  </div>
+                  
+                  <div class="small text-muted">
+                    Local: Sala {{ c.fsala.numero }}
+                  </div>
+                </div>
+                <span class="badge bg-dark rounded-pill">
+                  <i class="bi bi-check-circle-fill me-1"></i> Concluído
+                </span>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li class="list-group-item text-muted text-center py-4">
+              Nenhum procedimento registrado.
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+  <h2 class="mb-3">Alocação de Salas de Cirurgia</h2>
+
+  {# messages #}
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row">
+    <!-- left: salas e agenda -->
+    <div class="col-md-6">
+      <h5>Salas cadastradas</h5>
+      <ul class="list-group mb-3">
+        {% for sala in salas %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Sala #{{ sala.numero }}</strong>
+              <div class="small text-muted">{{ sala.departamento|default:"(sem depto)" }}</div>
+              <div class="small">
+                Médico:
+                {% if sala.fmedico %}
+                  {{ sala.fmedico.crm }}
+                {% else %}
+                  &mdash;
+                {% endif %}
+                &nbsp;·&nbsp;Enf:
+                {% if sala.fenfermeiro %}
+                  {{ sala.fenfermeiro.coren }}
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </div>
+
+            {% if sala.status and sala.status|lower == "ocupado" %}
+              <span class="badge bg-danger">ocupado</span>
+            {% else %}
+              <span class="badge bg-success">disponível</span>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="list-group-item">Nenhuma sala cadastrada.</li>
+        {% endfor %}
+      </ul>
+
+      <h5 class="mt-4">Próximas cirurgias</h5>
+      <ul class="list-group">
+        {% comment %} Mostramos últimos 8 agendamentos; se Cirurgia estiver vazio, mostra mensagem {% endcomment %}
+        {% with cirurgias=Cirurgia.objects.all|slice:":8" %}
+          {% if cirurgias %}
+            {% for c in cirurgias %}
+              <li class="list-group-item">
+                <div>
+                  <strong>
+                    Sala
+                    {% if c.fsala %}
+                      #{{ c.fsala.numero }}
+                    {% else %}
+                      ?
+                    {% endif %}
+                  </strong>
+                  — {{ c.data }} {{ c.horario }}
+                </div>
+
+                <div class="small text-muted">
+                  Med:
+                  {% if c.fmedico %}
+                    {{ c.fmedico.crm }}
+                  {% else %}
+                    &mdash;
+                  {% endif %}
+                  &nbsp;·&nbsp;
+                  Paciente:
+                  {% if c.fpaciente %}
+                    {{ c.fpaciente.pcpf }}
+                  {% else %}
+                    &mdash;
+                  {% endif %}
+                </div>
+              </li>
+
+            {% endfor %}
+          {% else %}
+            <li class="list-group-item text-muted">Nenhuma cirurgia agendada.</li>
+          {% endif %}
+        {% endwith %}
+      </ul>
+    </div>
+
+    <!-- right: formulário -->
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Reservar / Marcar Cirurgia</h5>
+          <form method="post" action="{% url 'alocar_sala' %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label">Sala</label>
+              <select name="sala_numero" class="form-select" required>
+                <option value="">Selecione...</option>
+                {% for sala in salas %}
+                  {% if sala.status and sala.status|lower == "ocupado" %}
+                    <option value="{{ sala.numero }}" disabled>Sala #{{ sala.numero }} — {{ sala.departamento|default:"(sem depto)" }} (ocupado)</option>
+                  {% else %}
+                    <option value="{{ sala.numero }}">Sala #{{ sala.numero }} — {{ sala.departamento|default:"(sem depto)" }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Data</label>
+              <input type="date" name="data" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Horário</label>
+              <input type="time" name="horario" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Enfermeiro (COREN) — opcional</label>
+              <select name="coren" class="form-select">
+                <option value="">Nenhum</option>
+                {% for enf in enfermeiros %}
+                  <option value="{{ enf.coren }}">{{ enf.coren }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Paciente (CPF) — opcional</label>
+              <input type="text" name="paciente_pcpf" class="form-control" placeholder="CPF do paciente" value="{{ request.GET.paciente|default:'' }}">
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">Marcar cirurgia e reservar sala</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-3 small text-muted">
+        Observação: a reserva marcará a sala como <em>ocupado</em> e criará um registro de cirurgia.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

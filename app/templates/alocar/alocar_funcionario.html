@@ -1,0 +1,35 @@
+<div class="container mt-5">
+  <h2>Alocar Funcionário em Departamento</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="cpf_funcionario">Funcionário:</label>
+      <select name="cpf_funcionario" class="form-control">
+        {% for f in funcionarios %}
+        <option value="{{ f.fcpf.cpf }}">{{ f.fcpf.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="nome_departamento">Departamento:</label>
+      <select name="nome_departamento" class="form-control">
+        {% for d in departamentos %}
+        <option value="{{ d.dnome }}">{{ d.dnome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="data_inicio">Data de Início:</label>
+      <input type="date" name="data_inicio" class="form-control" />
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="data_fim">Data de Fim:</label>
+      <input type="date" name="data_fim" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-4">Alocar</button>
+  </form>
+</div>
