@@ -4,8 +4,8 @@
   <thead>
     <tr style="background: #f2f2f2">
       <th style="padding: 10px; border: 1px solid #ccc">Local</th>
-      <th style="padding: 10px; border: 1px solid #ccc">Horário</th>
-      <th style="padding: 10px; border: 1px solid #ccc">Data</th>
+      <th style="padding: 10px; border: 1px solid #ccc">Início</th>
+      <th style="padding: 10px; border: 1px solid #ccc">Fim</th>
       <th style="padding: 10px; border: 1px solid #ccc">Alocado Por</th>
     </tr>
   </thead>
@@ -17,13 +17,15 @@
         {{ aloc.local.nome }}
       </td>
       <td style="padding: 10px; border: 1px solid #ccc">
-        {{ aloc.data_inicio }}
+        {% if aloc.data_inicio %} {{ aloc.data_inicio|date:"d/m/Y" }} {% else %}
+        — {% endif %}
       </td>
       <td style="padding: 10px; border: 1px solid #ccc">
-        {{ aloc.data_fim|default:"—" }}
+        {% if aloc.data_fim %} {{ aloc.data_fim|date:"d/m/Y" }} {% else %} — {%
+        endif %}
       </td>
       <td style="padding: 10px; border: 1px solid #ccc">
-        {{ aloc.alocado_por.usuario.username }}
+        {{ aloc.alocado_por.usuario.username|default:"—" }}
       </td>
     </tr>
     {% endfor %} {% else %}
