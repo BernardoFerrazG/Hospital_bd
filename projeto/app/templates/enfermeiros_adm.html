@@ -51,9 +51,9 @@
               <div class="row g-3">
 
                 <div class="col-md-6">
-                  <label class="form-label">Nome do Enfermeiro</label>
+                  <label class="form-label">COREN do Enfermeiro</label>
                   <select name="enfermeiro" class="form-select" required>
-                    <option value="">Selecione um enfermeiro</option>
+                    <option value="">Selecione um Enfermeiro a Partir do COREN</option>
                     {% for e in enfermeiros %}
                       <option value="{{ e.coren }}">{{ e.ecpf.nome }} — COREN {{ e.coren }}</option>
                     {% endfor %}
@@ -62,7 +62,7 @@
 
                 <!-- Consultório -->
                 <div class="col-md-4">
-                  <label class="form-label">Consultório (andar-numero)</label>
+                  <label class="form-label">Consultório</label>
                   <select name="consultorio" class="form-select" required>
                     <option value="">Selecione um consultório</option>
                     {% for c in consultorios %}
@@ -105,7 +105,7 @@
         <table class="table table-hover align-middle">
           <thead class="table-light">
             <tr>
-              <th>Nome</th>
+              
               <th>COREN</th>
               
               <th>Alocado em</th>
@@ -116,7 +116,7 @@
           <tbody>
             {% for a in alocacoes %}
               <tr>
-                <td>{{ a.coren_enfermeiro.ecpf.nome }}</td>
+                
                 <td>{{ a.coren_enfermeiro.coren }}</td>
                 <td>Consultório {{ a.andar }}-{{ a.numero }}</td>
 
