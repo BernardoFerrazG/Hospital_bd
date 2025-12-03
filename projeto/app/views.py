@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
@@ -137,6 +137,17 @@ def leitos_adm(request):
         {"leitos_cirurgia": leitos_cirurgia, "leitos_uti": leitos_uti}
     )
 
+
+def remover_leito_cirurgia(request, leito_numero):
+    leito = get_object_or_404(LeitoCirurgico, numero=leito_numero)
+    leito.delete()
+    return redirect("leitos_adm")
+
+def remover_leito_uti(request, leito_numero):
+    leito = get_object_or_404(LeitoUTI, numero=leito_numero)
+    leito.delete()
+    return redirect("leitos_adm")
+
 def consultorios_adm(request):
 
     # ───────────────────────────────
@@ -174,6 +185,12 @@ def consultorios_adm(request):
         "usuarios/consultorios_adm.html",
         {"consultorios": consultorios}
     )
+
+def remover_consultorio(request, numero):
+    Consultorio.objects.filter(numero=numero).delete()
+    return redirect("consultorios_adm")
+
+
 from .models import SalaCirurgia
 
 def salas_cirurgia_adm(request):
@@ -199,12 +216,9 @@ def salas_cirurgia_adm(request):
             fenfermeiro=None
         )
 
-        return redirect("salas_cirurgia_adm")
+    salas = SalaCirurgia.objects.all()
 
-    # ───────────────────────────────
-    # LISTAR SALAS DE CIRURGIA
-    # ───────────────────────────────
-    salas = SalaCirurgia.objects.all().order_by("numero")
+        
 
     return render(
         request,
@@ -212,6 +226,9 @@ def salas_cirurgia_adm(request):
         {"salas": salas}
     )
 
+def remover_sala(request, numero):
+    SalaCirurgia.objects.filter(numero=numero).delete()
+    return redirect("salas_cirurgia_adm")
 
 
 
