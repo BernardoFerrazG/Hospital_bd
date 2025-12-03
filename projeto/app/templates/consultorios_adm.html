@@ -52,7 +52,7 @@
 
             <div class="col-md-6">
               <label class="form-label">Número do Consultório</label>
-              <input type="text" name = "numero" class="form-control" placeholder="Ex: C-01" required />
+              <input type="text" name = "numero" class="form-control" placeholder="Ex: 1" required />
             </div>
 
             <div class="col-md-6">
@@ -101,43 +101,35 @@
           </thead>
 
           <tbody>
+            {% for c in consultorios %}
+              <tr>
+                <td>{{ c.numero }}</td>
 
-            <tr>
-              <td>C-01</td>
-              
-              <td><span class="badge bg-success">Disponível</span></td>
-              
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger">
-                  Remover
-                </button>
-              </td>
-            </tr>
+                <td>
+                  {% if c.status == "Disponível" %}
+                    <span class="badge bg-success">Disponível</span>
+                  {% elif c.status == "Em Atendimento" %}
+                    <span class="badge bg-warning text-dark">Em Atendimento</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Em Manutenção</span>
+                  {% endif %}
+                </td>
 
-            <tr>
-              <td>C-05</td>
-              
-              <td><span class="badge bg-warning text-dark">Em Atendimento</span></td>
-              
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger" disabled>
-                  Remover
-                </button>
-              </td>
-            </tr>
-
-            <tr>
-              <td>C-03</td>
-              
-              <td><span class="badge bg-secondary">Disponível</span></td>
-              
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger">
-                  Remover
-                </button>
-              </td>
-            </tr>
-
+                <td class="text-end">
+                  <a href="{% url 'remover_consultorio' c.numero %}" 
+                     class="btn btn-sm btn-danger"
+                     {% if c.status == "Em Atendimento" %}disabled{% endif %}>
+                     Remover
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">
+                  Nenhum consultório cadastrado.
+                </td>
+              </tr>
+            {% endfor %}
           </tbody>
         </table>
 
