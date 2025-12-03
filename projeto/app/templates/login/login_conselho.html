@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height:70vh;">
+  <div style="width:320px;">
+    <h3 class="mb-3">Login Conselho Presidente</h3>
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form action="{% url 'login_conselho' %}" method="post" class="mb-2">
+      {% csrf_token %}
+      <div class="mb-2">
+        <label class="form-label">CPF</label>
+        <input name="cpf" class="form-control" type="text" required placeholder="Digite seu CPF" />
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Senha</label>
+        <input name="senha" class="form-control" type="password" required />
+      </div>
+
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary">Entrar</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+    

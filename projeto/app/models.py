@@ -95,6 +95,23 @@ class Paciente(models.Model):
         return f"Paciente (CPF): {self.pcpf_id}"
 
 
+class ConselhoPresidente(models.Model):
+    cpf_presidente = models.OneToOneField(
+        Pessoa,
+        to_field="cpf",
+        db_column="cpf_presidente",
+        on_delete=models.CASCADE,
+        primary_key=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "conselho_presidente"
+
+    def __str__(self):
+        return f"Conselho Presidente: {self.cpf_presidente_id} - {self.cpf_presidente.nome}"
+
+
         
 class Departamento(models.Model):
     dnome = models.CharField(primary_key=True, max_length=50)
@@ -127,7 +144,7 @@ class FuncionarioTrabalhaEm(models.Model):
 
 
 class SalaCirurgia(models.Model):
-    numero = models.AutoField(primary_key=True)   # SERIAL
+    numero = models.AutoField(primary_key=True)
     departamento = models.ForeignKey(
         'Departamento', db_column='departamento',
         on_delete=models.SET_NULL, null=True, blank=True, to_field='dnome'

@@ -1,13 +1,15 @@
 from django.urls import path
 from app import views
 from app.medico.views import listar_salas, alocar_sala, listar_leitos, alocar_leito, listar_consultas, gerenciar_salas, desalocar_sala, liberar_leito, cadastro_medico, login_med
+from app.conselho.views import home_conselho, login_conselho
+
 
 urlpatterns = [
 
     path('', views.landing, name='landing'),
 
     path('cadastro/', views.cadastro, name='cadastro'),
-    
+
     path('cadastro/medico/', cadastro_medico, name='cadastro_medico'),
     path('cadastro/enfermeiro/', views.cadastro_enfermeiro, name='cadastro_enfermeiro'),
     path('cadastro/admin/', views.cadastro_admin, name='cadastro_admin'),
@@ -34,4 +36,8 @@ urlpatterns = [
     path('medico/salas/meus/', gerenciar_salas, name='gerenciar_salas'),
     path('medico/salas/desalocar/', desalocar_sala, name='desalocar_sala'),
     path('medico/salas/liberar_leito/', liberar_leito, name='liberar_leito'),
+
+    path('conselho/relatorios/', home_conselho, name='home_conselho'),
+    path('login/conselho/', login_conselho, name='login_conselho'),
+    path('home/conselho/', home_conselho, name='home_conselho'),
     ]

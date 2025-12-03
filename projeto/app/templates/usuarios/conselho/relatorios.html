@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+  <h3>Relatórios — Conselho Presidente</h3>
+  <p class="text-muted">Período: {{ inicio_periodo }} — {{ hoje }}</p>
+
+  <div class="row gy-3">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h5>Leitos Cirúrgicos</h5>
+        <p>Total: {{ stats_leito_cir.total }} — Ocupados: {{ stats_leito_cir.ocupados }} ({{ stats_leito_cir.percentual }}%)</p>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h5>Leitos UTI</h5>
+        <p>Total: {{ stats_leito_uti.total }} — Ocupados: {{ stats_leito_uti.ocupados }} ({{ stats_leito_uti.percentual }}%)</p>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card p-3">
+        <h5>Utilização de Consultórios</h5>
+        <p>Consultórios usados no período: {{ consultorios_usados }} / {{ total_consultorios }} ({{ consultorios_util_pct }}%)</p>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h6>Top consultórios (por nº de consultas)</h6>
+        <table class="table table-sm">
+          <thead><tr><th>Consultório</th><th>Depto</th><th>Consultas</th></tr></thead>
+          <tbody>
+            {% for c in top_consultorios %}
+            <tr>
+              <td>{{ c.andar }}/{{ c.numero }}</td>
+              <td>{{ c.departamento|default:"—" }}</td>
+              <td>{{ c.consultas }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card p-3">
+        <h6>Consultas por dia (últimos 30 dias)</h6>
+        <table class="table table-sm">
+          <thead><tr><th>Data</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for row in consultas_por_dia %}
+            <tr><td>{{ row.data }}</td><td>{{ row.total }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
