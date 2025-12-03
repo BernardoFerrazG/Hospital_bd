@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <title>Gerenciar Leitos</title>
+
+    <style>
+      :root { --bs-primary: #005a9c; }
+      .page-title { color: var(--bs-primary); font-weight: 600; }
+      .form-card {
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        background: white;
+      }
+      .table-card {
+        padding: 24px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+      }
+    </style>
+  </head>
+
+  <body style="background-color: #f4f7f6">
+
+    <main class="container py-4">
+
+      <h1 class="page-title mb-1">Gerenciar Leitos</h1>
+      <p class="text-muted mb-4">Cadastre novos leitos ou remova existentes.</p>
+
+      <!-- FORMULÁRIO DE CADASTRO DE LEITO -->
+      <div class="form-card mb-5">
+
+        <h4 class="mb-3">Cadastrar Leito</h4>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Código do Leito</label>
+              <input type="text" name="numero" class="form-control" placeholder="Ex: L-203" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Tipo de Leito</label>
+              <select name = "tipo" class="form-select" required>
+                <option>Escolha o tipo de leito</option>
+                <option>Cirurgia</option>
+                <option>UTI</option>
+                
+              </select>
+            </div>
+
+
+            <div class="col-md-12 text-end">
+              <button type="submit" class="btn btn-primary px-4">
+                Cadastrar Leito
+              </button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+
+      <!-- LISTA DE LEITOS -->
+      <div class="table-card">
+
+        <h4 class="mb-3">Leitos Cadastrados</h4>
+
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Código</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th class="text-end">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- EXEMPLO DE LINHA -->
+            <tr>
+              <td>L-203</td>
+              <td>UTI</td>
+              <td><span class="badge bg-success">Disponível</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-danger">
+                  <i class="bi bi-trash"></i> Remover
+                </button>
+              </td>
+            </tr>
+
+            <tr>
+              <td>L-110</td>
+              <td>Enfermaria</td>
+              <td><span class="badge bg-warning text-dark">Ocupado</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-danger" disabled>
+                  <i class="bi bi-trash"></i> Remover
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+    </main>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+  </body>
+</html>
