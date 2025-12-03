@@ -50,9 +50,9 @@
           <div class="row g-3">
 
             <div class="col-md-6">
-              <label class="form-label">Nome do Médico</label>
+              <label class="form-label">CRM do Médico</label>
               <select name="medico" class="form-select" required>
-                <option value="">Selecione um médico</option>
+                <option value="">Selecione um Médico a Partir do CRM</option>
                 {% for m in medicos %}
                   <option value="{{ m.crm }}">{{ m.mcpf.nome }} — CRM {{ m.crm }}</option>
                 {% endfor %}
@@ -65,7 +65,7 @@
 
             <!-- Associação a Consultório -->
             <div class="col-md-4">
-              <label class="form-label">Consultório(format: andar-numero)</label>
+              <label class="form-label">Consultório</label>
               <select name="consultorio" class="form-select" required>
                 <option value="">Selecione um consultório</option>
                 {% for c in consultorios %}
@@ -110,7 +110,7 @@
         <table class="table table-hover align-middle">
           <thead class="table-light">
             <tr>
-              <th>Nome</th>
+              
               <th>CRM</th>
               
               <th>Alocado em</th>
@@ -121,7 +121,7 @@
           <tbody>
             {% for a in alocacoes %}
               <tr>
-                <td>{{ a.crm_medico.mcpf.nome }}</td>
+                
                 <td>{{ a.crm_medico.crm }}</td>
                 <td>Consultório {{ a.andar }}-{{ a.numero }}</td>
 
