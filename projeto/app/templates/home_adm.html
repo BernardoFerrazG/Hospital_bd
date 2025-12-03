@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <title>Portal do Paciente</title>
+    <style>
+      :root { --bs-primary: #005a9c; }
+      .navbar-brand { font-weight: 600; }
+      .action-card {
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+      .action-card .card-title { color: var(--bs-primary); font-weight: 600; }
+      .action-card .card-icon { font-size: 3rem; color: var(--bs-primary); }
+      .user-menu { color: rgba(255, 255, 255, 0.8); }
+      .user-menu a { color: white; text-decoration: none; font-weight: 500; }
+      html,
+      body {
+        min-height: 100vh;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      main {
+        flex-grow: 1;
+      }
+    </style>
+  </head>
+  <body style="background-color: #f4f7f6">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+          <i class="bi bi-hospital"></i> Nome do Hospital
+        </a>
+        <div class="d-flex align-items-center">
+          <span class="navbar-text user-menu me-3"> Olá, (Nome do Administrador) </span>
+          <a href="#" class="btn btn-outline-light">
+            <i class="bi bi-box-arrow-right me-1"></i>Sair
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <div class="container-fluid py-4 bg-light">
+        <div class="container">
+          <h1>Bem-vindo, [Nome do Administrador]</h1>
+          <p class="lead text-muted">
+            Seu portal para gerenciamento do Departamento.
+          </p>
+        </div>
+      </div>
+
+      <div class="container mt-4">
+        <div class="row g-4 pb-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="card action-card h-100">
+              <div class="card-body text-center d-flex flex-column">
+                <span class="mb-3 d-inline-block px-3 py-2 rounded-2 bg-primary text-white"
+      style="font-size: 20px; font-weight: bold;">
+  LEITO
+</span>
+
+                <h5 class="card-title">Gerenciar Leitos</h5>
+                <p class="card-text text-muted">
+                  Cadastre ou remova Leitos.
+                </p>
+                <a href="{% url 'leitos_adm' %}" class="btn btn-primary mt-auto">Visualizar Leitos</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card action-card h-100">
+              <div class="card-body text-center d-flex flex-column">
+                <span class="mb-3 d-inline-block px-3 py-2 rounded-2 bg-primary text-white"
+      style="font-size: 20px; font-weight: bold;">
+  SALAS DE CIRURGIA
+</span>
+                <h5 class="card-title">Gerenciar Salas de Cirurgia</h5>
+                <p class="card-text text-muted">
+                  Cadastre ou remova salas de cirurgia.
+                </p>
+                <a href="{% url 'salas_cirurgia_adm' %}" class="btn btn-primary mt-auto">Visualizar Salas de Cirurgia</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card action-card h-100">
+              <div class="card-body text-center d-flex flex-column">
+                <span class="mb-3 d-inline-block px-3 py-2 rounded-2 bg-primary text-white"
+      style="font-size: 20px; font-weight: bold;">
+  CONSULTÓRIOS
+</span>
+                <h5 class="card-title">Gerenciar Consultórios</h5>
+                <p class="card-text text-muted">
+                  Cadastre ou remova consultórios.
+                </p>
+                <a href="{% url 'consultorios_adm' %}" class="btn btn-primary mt-auto">Visualizar Consultórios</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card action-card h-100">
+              <div class="card-body text-center d-flex flex-column">
+                <span class="mb-3 d-inline-block px-3 py-2 rounded-2 bg-primary text-white"
+      style="font-size: 20px; font-weight: bold;">
+ MÉDICOS
+</span>
+                <h5 class="card-title">Gerenciar Médicos</h5>
+                <p class="card-text text-muted">
+                  Aloque ou desaloque médicos para seus respectivos consultórios.
+                </p>
+                <a href="{% url 'medicos_adm' %}" class="btn btn-primary mt-auto">Visualizar Médicos</a>
+                  
+                
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card action-card h-100">
+              <div class="card-body text-center d-flex flex-column">
+                <span class="mb-3 d-inline-block px-3 py-2 rounded-2 bg-primary text-white"
+      style="font-size: 20px; font-weight: bold;">
+  Enfermeiros
+</span>
+                <h5 class="card-title">Gerenciar Enfermeiros</h5>
+                <p class="card-text text-muted">
+                  Aloque ou desaloque enfermeiros para seus respectivos consultórios.
+                </p>
+                <a href="{% url 'enfermeiros_adm' %}" class="btn btn-primary mt-auto">Visualizar Enfermeiros</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script
