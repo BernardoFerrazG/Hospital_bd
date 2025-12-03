@@ -8,9 +8,6 @@ from django.contrib.auth import get_user_model
 
 
 
-
-
-
 def cadastro_enfermeiro(request):
     # tenta recuperar pessoa por sessão ou querystring (se usar esse fluxo)
     cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None

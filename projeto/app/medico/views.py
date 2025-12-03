@@ -6,79 +6,97 @@ from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCiru
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, date
 from django.contrib import messages
-
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as login_django
 
 
 def cadastro_medico(request):
-    # Tenta recuperar pessoa por sessão / querystring (se você ainda usar essa mecânica)
-    cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None
-    cpf_get = request.GET.get('cpf')
-    pessoa = None
-    if cpf_session:
-        try:
-            pessoa = Pessoa.objects.get(cpf=cpf_session)
-        except Pessoa.DoesNotExist:
-            pessoa = None
-    elif cpf_get:
-        try:
-            pessoa = Pessoa.objects.get(cpf=cpf_get)
-        except Pessoa.DoesNotExist:
-            pessoa = None
-
     if request.method == "GET":
-        # Se a view foi chamada após o cadastro inicial você pode passar 'pessoa' no contexto
-        return render(request, "cadastros/cadastro_medico.html", {"pessoa": pessoa})
+        cpf_prefill = request.GET.get("cpf", "")
+        return render(request, "cadastros/cadastro_medico.html", {"cpf_prefill": cpf_prefill})
 
-    # POST: lê campos mínimos
+    nome = request.POST.get("nome", "").strip()
+    cpf = request.POST.get("cpf", "").strip()
+    sexo = request.POST.get("sexo", "").strip()
+    telefone = request.POST.get("telefone", "").strip()
+    email = request.POST.get("email", "").strip()
+    data_nascimento = request.POST.get("data_nascimento") or None
+    senha = request.POST.get("senha", "").strip()
+    senha_confirm = request.POST.get("senha_confirm", "").strip()
     crm = request.POST.get("crm", "").strip()
-    cpf_hidden = request.POST.get("cpf", "").strip()           # hidden se a view passou pessoa
-    cpf_confirm = request.POST.get("cpf_confirm", "").strip() # o que o usuário digitou para confirmar
 
-    if not (crm and cpf_confirm):
-        return HttpResponse("Campos obrigatórios: CRM e confirmação do CPF.", status=400)
+    if not (nome and cpf and senha and crm):
+        return HttpResponse("Campos obrigatórios: nome, cpf, senha e CRM.", status=400)
 
-    # Decide o CPF real a usar:
-    # - se veio cpf_hidden (pessoa no contexto), exige que cpf_confirm == cpf_hidden
-    # - se não veio, cpf_confirm será usado como o CPF para buscar/criar pessoa
-    if cpf_hidden:
-        if cpf_confirm != cpf_hidden:
-            return HttpResponse("CPF de confirmação não corresponde ao CPF esperado.", status=400)
-        cpf = cpf_hidden
-    else:
-        cpf = cpf_confirm
+    if senha != senha_confirm:
+        return HttpResponse("As senhas não coincidem.", status=400)
 
-    # Tenta obter a Pessoa; se não existir, retornamos erro (ou você pode optar por criar a Pessoa aqui)
-    try:
-        pessoa_obj = Pessoa.objects.get(cpf=cpf)
-    except Pessoa.DoesNotExist:
-        return HttpResponse("Pessoa não encontrada com esse CPF. Faça primeiro o cadastro inicial.", status=404)
-
-    # Valida CRM único
-    if Medico.objects.filter(crm=crm).exists():
-        return HttpResponse("CRM já cadastrado.", status=400)
-
-    # Cria/atualiza Funcionario e Medico com valores default (salario/horas = 0)
     try:
         with transaction.atomic():
-            func, criado = Funcionario.objects.get_or_create(
-                fcpf=pessoa_obj,
+
+            pessoa, _ = Pessoa.objects.get_or_create(
+                cpf=cpf,
                 defaults={
-                    "salario": 0,
-                    "horas_trabalhadas": 0
+                    "nome": nome,
+                    "sexo": sexo or None,
+                    "telefone": telefone or None,
+                    "email": email or None,
+                    "data_nascimento": data_nascimento if data_nascimento else None
                 }
             )
-            if not criado:
-                # mantém salario e horas ou atualiza se quiser; aqui deixamos como estavam
-                pass
 
-            Medico.objects.create(
-                crm=crm,
-                mcpf=func
+            func, _ = Funcionario.objects.get_or_create(
+                fcpf=pessoa,
+                defaults={"salario": 0, "horas_trabalhadas": 0}
             )
+
+            if Medico.objects.filter(crm=crm).exists():
+                return HttpResponse("CRM já cadastrado.", status=400)
+
+            Medico.objects.create(crm=crm, mcpf=func)
+
+            user, _ = User.objects.get_or_create(username=cpf)
+            user.set_password(senha)
+            if email:
+                user.email = email
+            user.save()
+
+            request.session['cpf'] = cpf
+            request.session.save()
+
     except Exception as e:
         return HttpResponse(f"Erro ao cadastrar médico: {e}", status=500)
 
-    return redirect(reverse("login"))
+    return redirect("login_med")
+
+
+
+def login_med(request):
+    if request.method == "GET":
+        return render(request, "login/login_med.html")
+
+    cpf = request.POST.get("cpf", "").strip()
+    senha = request.POST.get("senha", "")
+
+    if not (cpf and senha):
+        return HttpResponse("Preencha CPF e senha.", status=400)
+
+    user = authenticate(username=cpf, password=senha)
+    if not user:
+        return HttpResponse("Credenciais inválidas!", status=401)
+
+    login_django(request, user)
+
+    pessoa = Pessoa.objects.filter(cpf=cpf).first()
+    if not pessoa:
+        return HttpResponse("Sem registro na tabela Pessoa.", status=404)
+
+    funcionario = Funcionario.objects.filter(fcpf=pessoa).first()
+    if funcionario and Medico.objects.filter(mcpf=funcionario).exists():
+        return redirect("home_med")
+
+    return HttpResponse("Você não é médico!", status=403)
 
 
 @login_required(login_url='/auth/login/')

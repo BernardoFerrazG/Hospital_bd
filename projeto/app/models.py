@@ -8,6 +8,7 @@ class Pessoa(models.Model):
     telefone = models.CharField(max_length=20)
     email = models.CharField(max_length=100)
     data_nascimento = models.DateField()
+    senha = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False  # Django não cria nem altera a tabela

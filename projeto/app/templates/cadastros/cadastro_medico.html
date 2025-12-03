@@ -1,37 +1,60 @@
-{% extends 'base.html' %} {% block conteudo %}
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4" style="max-width:720px;">
+  <h2 class="mb-3">Cadastro de Médico</h2>
 
-<div class="form-container">
-  <h1>Cadastro Médico</h1>
-  <form action="{% url 'cadastro_medico' %}" method="POST">
-    {% csrf_token %} {% if pessoa %}
-    <!-- Exibe para confirmação; também colocamos o cpf real em hidden -->
-    <input type="hidden" name="cpf" value="{{ pessoa.cpf }}" />
-    <p>Registrando para: <strong>{{ pessoa.nome }}</strong></p>
-    <p>CPF cadastrado: <strong>{{ pessoa.cpf }}</strong></p>
+  <form action="{% url 'cadastro_medico' %}" method="post" class="row g-3">
+    {% csrf_token %}
+    <div class="col-12">
+      <label class="form-label">Nome</label>
+      <input name="nome" class="form-control" type="text" required placeholder="Nome completo" />
+    </div>
 
-    <label>Confirme o CPF *</label>
-    <input
-      name="cpf_confirm"
-      type="text"
-      required
-      placeholder="Digite o CPF para confirmar"
-    />
-    {% else %}
-    <!-- Se não veio pessoa no contexto, pedimos que o usuário digite/ confirme o CPF -->
-    <label>CPF *</label>
-    <input name="cpf_confirm" type="text" required placeholder="Digite o CPF" />
+    <div class="col-md-6">
+      <label class="form-label">CPF</label>
+      <input name="cpf" class="form-control" type="text" value="{{ cpf_prefill }}" required placeholder="Só números" />
+      <div class="form-text">Informe o CPF (será usado como username).</div>
+    </div>
 
-    <p style="color: gray; font-size: 0.9rem">
-      Observação: sem CPF pré-criado, este formulário também criará o vínculo
-      usando o CPF informado.
-    </p>
-    {% endif %}
+    <div class="col-md-6">
+      <label class="form-label">CRM</label>
+      <input name="crm" class="form-control" type="text" required placeholder="Ex: 12345" />
+    </div>
 
-    <label>CRM *</label>
-    <input name="crm" type="text" required placeholder="Ex: 12345" />
+    <div class="col-md-4">
+      <label class="form-label">Sexo</label>
+      <input name="sexo" class="form-control" type="text" placeholder="M / F / Outro" />
+    </div>
 
-    <button type="submit">Cadastrar Médico</button>
+    <div class="col-md-4">
+      <label class="form-label">Telefone</label>
+      <input name="telefone" class="form-control" type="text" placeholder="(xx) xxxxx-xxxx" />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">E-mail</label>
+      <input name="email" class="form-control" type="email" placeholder="seu@exemplo.com" />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Data de nascimento</label>
+      <input name="data_nascimento" class="form-control" type="date" />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Senha</label>
+      <input name="senha" class="form-control" type="password" required />
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Confirmar senha</label>
+      <input name="senha_confirm" class="form-control" type="password" required />
+    </div>
+
+    <div class="col-12">
+      <button class="btn btn-primary">Cadastrar Médico</button>
+      <a href="{% url 'login_med' %}" class="btn btn-link">Voltar ao login</a>
+    </div>
   </form>
 </div>
-
 {% endblock %}
