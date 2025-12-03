@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Minhas Salas e Leitos Relacionados</h3>
+    <a href="{% url 'home_med' %}" class="btn btn-sm btn-outline-secondary">Voltar</a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <p class="text-muted">Aqui você vê as salas atualmente alocadas a você e pode liberá-las. Se quiser, marque a opção para cancelar cirurgias futuras ao liberar a sala. Abaixo também aparecem leitos ocupados relacionados aos pacientes que passaram por suas cirurgias — você pode liberar esses leitos quando apropriado.</p>
+
+  {% if salas_with_cir %}
+    <div class="row">
+      <div class="col-md-7">
+        <div class="list-group">
+          {% for sala, cir_list in salas_with_cir %}
+            <div class="list-group-item mb-3">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="mb-1">Sala #{{ sala.numero }}{% if sala.departamento %} — {{ sala.departamento }}{% endif %}</h5>
+                  <div class="small text-muted">
+                    Status: {% if sala.status %}{{ sala.status }}{% else %}&mdash;{% endif %}
+                    {% if sala.fenfermeiro %} · Enfermeiro: {{ sala.fenfermeiro.coren }}{% endif %}
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <form method="post" action="{% url 'desalocar_sala' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="sala_numero" value="{{ sala.numero }}">
+                    <div class="mb-2 form-check text-start">
+                      <input class="form-check-input" type="checkbox" name="cancel_cirurgias" id="cancel_{{ sala.numero }}">
+                      <label class="form-check-label small" for="cancel_{{ sala.numero }}">Cancelar cirurgias futuras desta sala</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-danger">Liberar sala</button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="mt-2">
+                {% if cir_list %}
+                  <div class="small text-muted">Próximas cirurgias (até 5):</div>
+                  <ul class="mb-0">
+                    {% for c in cir_list %}
+                      <li class="small">
+                        {{ c.data }} {{ c.horario }} — Paciente:
+                        {% if c.fpaciente %}
+                          {% if c.fpaciente.pcpf %}
+                            {{ c.fpaciente.pcpf.nome }}
+                          {% else %}
+                            {{ c.fpaciente }}
+                          {% endif %}
+                        {% else %}
+                          &mdash;
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <div class="small text-muted">Nenhuma cirurgia futura nesta sala.</div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-5">
+        <h5>Leitos ocupados (pacientes seus)</h5>
+
+        <div class="mb-3">
+          <div class="small text-muted mb-2">Leitos cirúrgicos ocupados</div>
+          {% if leitos_cir_ocup %}
+            <ul class="list-group mb-3">
+              {% for l in leitos_cir_ocup %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    Leito #{{ l.numero }} — {{ l.departamento|default:"(sem depto)" }}
+                    <div class="small text-muted">
+                      Paciente:
+                      {% if l.fpaciente %}
+                        {# se existe relação fpaciente.pcpf (Pessoa) mostramos o nome quando disponível #}
+                        {% if l.fpaciente.pcpf %}
+                          {% if l.fpaciente.pcpf.nome %}
+                            {{ l.fpaciente.pcpf.nome }}
+                          {% else %}
+                            {{ l.fpaciente.pcpf }}
+                          {% endif %}
+                        {% else %}
+                          {# fallback: exibe representação do objeto paciente #}
+                          {{ l.fpaciente }}
+                        {% endif %}
+                      {% else %}
+                        &mdash;
+                      {% endif %}
+                    </div>
+
+                  </div>
+                  <div>
+                    <form method="post" action="{% url 'liberar_leito' %}" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="tipo" value="cirurgico">
+                      <input type="hidden" name="leito_numero" value="{{ l.numero }}">
+                      <button class="btn btn-sm btn-outline-danger">Liberar</button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="alert alert-secondary">Nenhum leito cirúrgico ocupado relacionado a seus pacientes.</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <div class="small text-muted mb-2">Leitos UTI ocupados</div>
+          {% if leitos_uti_ocup %}
+            <ul class="list-group">
+              {% for l in leitos_uti_ocup %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    Leito UTI #{{ l.numero }} — {{ l.departamento|default:"(sem depto)" }}
+                    <div class="small text-muted">
+                      Paciente:
+                      {% if l.fpaciente %}
+                          {% if l.fpaciente.pcpf %}
+                              {{ l.fpaciente.pcpf.nome|default:l.fpaciente.pcpf }}
+                          {% else %}
+                              {{ l.fpaciente }}
+                          {% endif %}
+                      {% else %}
+                          &mdash;
+                      {% endif %}
+                    </div>
+
+                  </div>
+                  <div>
+                    <form method="post" action="{% url 'liberar_leito' %}" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="tipo" value="uti">
+                      <input type="hidden" name="leito_numero" value="{{ l.numero }}">
+                      <button class="btn btn-sm btn-outline-danger">Liberar</button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="alert alert-secondary">Nenhum leito UTI ocupado relacionado a seus pacientes.</div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+  {% else %}
+    <div class="alert alert-info">Você não possui salas alocadas no momento.</div>
+  {% endif %}
+</div>
+{% endblock %}

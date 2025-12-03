@@ -215,7 +215,6 @@ class LeitoUTI(models.Model):
         db_table = "leito_uti"
 
 
-# (Opcional: model Cirurgia se desejar registrar a cirurgia ao alocar)
 class Cirurgia(models.Model):
     nmr_cirurgia = models.AutoField(primary_key=True)
     horario = models.TimeField(null=True, blank=True)
@@ -260,3 +259,38 @@ class Cirurgia(models.Model):
     class Meta:
         managed = False
         db_table = "cirurgia"
+
+
+class Consulta(models.Model):
+    nmr_consulta = models.AutoField(primary_key=True)
+    horario = models.TimeField(null=True, blank=True)
+    data = models.DateField(null=True, blank=True)
+
+    fpaciente = models.ForeignKey(
+        "Paciente",
+        to_field="pcpf",
+        db_column="fpaciente",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    fmedico = models.ForeignKey(
+        "Medico",
+        to_field="crm",
+        db_column="fmedico",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    andar = models.IntegerField(null=True, blank=True)
+    numero = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = "consulta"
+
+    def __str__(self):
+        paciente_nome = self.fpaciente.pcpf.nome if self.fpaciente and self.fpaciente.pcpf else "—"
+        return f"{self.data} {self.horario} — {paciente_nome} — consultório {self.andar}/{self.numero}"
