@@ -2,13 +2,58 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
+from django.contrib.auth.models import User
 from ..models import Pessoa, Funcionario, Enfermeiro, Departamento, FuncionarioTrabalhaEm
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, login as login_django, get_user_model
 
 
 
 
+
+def login_enfermeiro(request):
+    if request.method == "GET":
+        return render(request, "login/login_enfermeiro.html")
+    
+    # POST - processar login
+    nome = request.POST.get("nome", "").strip()
+    senha = request.POST.get("senha", "").strip()
+    coren = request.POST.get("coren", "").strip()
+    
+    if not (nome and senha and coren):
+        return HttpResponse("Campos obrigatórios: nome, senha e COREN.", status=400)
+    
+    # Autenticar usuário
+    user = authenticate(username=nome, password=senha)
+    if not user:
+        return HttpResponse("Credenciais inválidas (nome ou senha incorretos).", status=401)
+    
+    # Verificar se o usuário autenticado é um enfermeiro com o COREN fornecido
+    try:
+        # Tentar encontrar a Pessoa associada (por CPF ou nome)
+        pessoa = Pessoa.objects.filter(cpf=nome).first()
+        if not pessoa:
+            pessoa = Pessoa.objects.filter(nome=nome).first()
+        
+        if not pessoa:
+            return HttpResponse("Usuário autenticado, mas sem registro de pessoa.", status=404)
+        
+        # Verificar se é um funcionário
+        funcionario = Funcionario.objects.get(fcpf=pessoa)
+        
+        # Verificar se é enfermeiro com o COREN correto
+        enfermeiro = Enfermeiro.objects.get(ecpf=funcionario, coren=coren)
+        
+        # Se chegou aqui, tudo está correto - fazer login
+        login_django(request, user)
+        return redirect(reverse("home_enf"))
+        
+    except Pessoa.DoesNotExist:
+        return HttpResponse("Pessoa não encontrada.", status=404)
+    except Funcionario.DoesNotExist:
+        return HttpResponse("Usuário não é um funcionário registrado.", status=403)
+    except Enfermeiro.DoesNotExist:
+        return HttpResponse("COREN não encontrado ou não corresponde a este usuário.", status=403)
 
 
 def cadastro_enfermeiro(request):
@@ -34,9 +79,11 @@ def cadastro_enfermeiro(request):
     coren = request.POST.get("coren", "").strip()
     cpf_hidden = request.POST.get("cpf", "").strip()
     cpf_confirm = request.POST.get("cpf_confirm", "").strip()
+    nome = request.POST.get("nome", "").strip()
+    senha = request.POST.get("senha", "").strip()
 
-    if not (coren and cpf_confirm):
-        return HttpResponse("Campos obrigatórios: COREN e confirmação do CPF.", status=400)
+    if not (coren and cpf_confirm and senha):
+        return HttpResponse("Campos obrigatórios: COREN, CPF e Senha.", status=400)
 
     # Decide o CPF real
     if cpf_hidden:
@@ -46,18 +93,37 @@ def cadastro_enfermeiro(request):
     else:
         cpf = cpf_confirm
 
-    # Tenta obter Pessoa; se não existir, informe para cadastrar primeiro (ou remova essa restrição se preferir criar automaticamente)
-    try:
-        pessoa_obj = Pessoa.objects.get(cpf=cpf)
-    except Pessoa.DoesNotExist:
-        return HttpResponse("Pessoa não encontrada com esse CPF. Faça primeiro o cadastro inicial.", status=404)
-
     # Valida COREN único
     if Enfermeiro.objects.filter(coren=coren).exists():
         return HttpResponse("COREN já cadastrado.", status=400)
 
+    # Tenta obter Pessoa; se não existir e nome foi fornecido, cria automaticamente
+    try:
+        pessoa_obj = Pessoa.objects.get(cpf=cpf)
+    except Pessoa.DoesNotExist:
+        if not nome:
+            return HttpResponse("Pessoa não encontrada. Por favor, forneça o nome para criar o registro.", status=404)
+        
+        # Validar duplicatas antes de criar
+        if User.objects.filter(username=nome).exists():
+            return HttpResponse("Nome de usuário já existe.", status=400)
+        
+        # Cria pessoa automaticamente se nome foi fornecido
+        try:
+            pessoa_obj = Pessoa.objects.create(
+                cpf=cpf,
+                nome=nome,
+                sexo="",
+                telefone="",
+                email="",
+                data_nascimento=None
+            )
+        except Exception as e:
+            return HttpResponse(f"Erro ao criar pessoa: {e}", status=500)
+
     try:
         with transaction.atomic():
+            # Criar Funcionario se não existir
             func, criado = Funcionario.objects.get_or_create(
                 fcpf=pessoa_obj,
                 defaults={
@@ -65,17 +131,22 @@ def cadastro_enfermeiro(request):
                     "horas_trabalhadas": 0
                 }
             )
-            if not criado:
-                # optional: atualizar salario/horas se quiser
-                pass
 
-            # cria o enfermeiro
+            # Criar usuário Django se não existir (apenas se foi criada nova Pessoa)
+            if not User.objects.filter(username=pessoa_obj.nome).exists():
+                User.objects.create_user(
+                    username=pessoa_obj.nome,
+                    email=pessoa_obj.email or "",
+                    password=senha
+                )
+
+            # Criar o enfermeiro
             Enfermeiro.objects.create(
                 coren=coren,
                 ecpf=func
             )
 
-            # limpa cpf da sessão se existir
+            # Limpar CPF da sessão se existir
             if 'cpf' in request.session:
                 try:
                     request.session.pop('cpf', None)
@@ -86,8 +157,8 @@ def cadastro_enfermeiro(request):
     except Exception as e:
         return HttpResponse(f"Erro ao cadastrar enfermeiro: {e}", status=500)
 
-    # redireciona para home_enf após sucesso
-    return redirect(reverse("login"))
+    # Redirecionar para login do enfermeiro após sucesso
+    return redirect(reverse("login_enfermeiro"))
 
 
 

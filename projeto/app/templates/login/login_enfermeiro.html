@@ -1,0 +1,191 @@
+{% extends 'base.html' %} {% block conteudo %}
+
+<title>Login Enfermeiro</title>
+<style>
+  .login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+  }
+
+  .login-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-card h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+
+  .login-card p {
+    text-align: center;
+    color: #777;
+    margin-bottom: 30px;
+    font-size: 14px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+  }
+
+  .form-group input[type="password"] {
+    font-family: monospace;
+    letter-spacing: 2px;
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-login:active {
+    transform: translateY(0);
+  }
+
+  .error-message {
+    color: #d32f2f;
+    background-color: #ffebee;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #d32f2f;
+    font-size: 14px;
+  }
+
+  .success-message {
+    color: #388e3c;
+    background-color: #e8f5e9;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #388e3c;
+    font-size: 14px;
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #999;
+  }
+
+  .login-footer a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .login-footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="login-container">
+  <div class="login-card">
+    <h1>Login Enfermeiro</h1>
+    <p>Acesse sua conta com suas credenciais</p>
+
+    {% if messages %} {% for message in messages %}
+    <div
+      class="{% if message.tags %}{{ message.tags }}{% else %}error{% endif %}-message"
+    >
+      {{ message }}
+    </div>
+    {% endfor %} {% endif %}
+
+    <form action="{% url 'login_enfermeiro' %}" method="POST">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="nome">Nome de Usuário *</label>
+        <input
+          id="nome"
+          name="nome"
+          type="text"
+          required
+          placeholder="Digite seu nome de usuário"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha *</label>
+        <input
+          id="senha"
+          name="senha"
+          type="password"
+          required
+          placeholder="Digite sua senha"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="coren">COREN *</label>
+        <input
+          id="coren"
+          name="coren"
+          type="text"
+          required
+          placeholder="Ex: 123456/SP"
+        />
+      </div>
+
+      <button type="submit" class="btn-login">Entrar</button>
+    </form>
+
+    <div class="login-footer">
+      Ainda não tem conta? <a href="{% url 'landing' %}">Cadastre-se aqui</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

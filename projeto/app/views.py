@@ -15,6 +15,49 @@ from .paciente.views import cadastro_paciente, home
 def landing(request):
     return render(request, "login/landing.html")
 
+def login_enfermeiro(request):
+    if request.method == "GET":
+        return render(request, "login/login_enfermeiro.html")
+    
+    # POST - processar login
+    nome = request.POST.get("nome", "").strip()
+    senha = request.POST.get("senha", "").strip()
+    coren = request.POST.get("coren", "").strip()
+    
+    if not (nome and senha and coren):
+        return HttpResponse("Campos obrigatórios: nome, senha e COREN.", status=400)
+    
+    # Autenticar usuário
+    user = authenticate(username=nome, password=senha)
+    if not user:
+        return HttpResponse("Credenciais inválidas (nome ou senha incorretos).", status=401)
+    
+    # Verificar se o usuário autenticado é um enfermeiro com o COREN fornecido
+    try:
+        # Tentar encontrar a Pessoa associada (por CPF ou nome)
+        pessoa = Pessoa.objects.filter(cpf=nome).first()
+        if not pessoa:
+            pessoa = Pessoa.objects.filter(nome=nome).first()
+        
+        if not pessoa:
+            return HttpResponse("Usuário autenticado, mas sem registro de pessoa.", status=404)
+        
+        # Verificar se é um funcionário
+        funcionario = Funcionario.objects.get(fcpf=pessoa)
+        
+        # Verificar se é enfermeiro com o COREN correto
+        enfermeiro = Enfermeiro.objects.get(ecpf=funcionario, coren=coren)
+        
+        # Se chegou aqui, tudo está correto - fazer login
+        login_django(request, user)
+        return redirect(reverse("home_enf"))
+        
+    except Pessoa.DoesNotExist:
+        return HttpResponse("Pessoa não encontrada.", status=404)
+    except Funcionario.DoesNotExist:
+        return HttpResponse("Usuário não é um funcionário registrado.", status=403)
+    except Enfermeiro.DoesNotExist:
+        return HttpResponse("COREN não encontrado ou não corresponde a este usuário.", status=403)
 
 def cadastro(request):
     if request.method == "GET":

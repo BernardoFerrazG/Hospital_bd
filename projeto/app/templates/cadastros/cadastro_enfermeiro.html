@@ -6,32 +6,170 @@
     {% csrf_token %} {% if pessoa %}
     <!-- pessoa passada no contexto: mostramos para confirmação -->
     <input type="hidden" name="cpf" value="{{ pessoa.cpf }}" />
-    <p>Registrando para: <strong>{{ pessoa.nome }}</strong></p>
-    <p>CPF cadastrado: <strong>{{ pessoa.cpf }}</strong></p>
 
-    <label>Confirme o CPF *</label>
-    <input
-      name="cpf_confirm"
-      type="text"
-      required
-      placeholder="Digite o CPF para confirmar"
-    />
+    <div class="form-group">
+      <label>Nome *</label>
+      <input
+        type="text"
+        value="{{ pessoa.nome }}"
+        disabled
+        class="form-control-disabled"
+        placeholder="Nome do enfermeiro"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>CPF *</label>
+      <input
+        type="text"
+        value="{{ pessoa.cpf }}"
+        disabled
+        class="form-control-disabled"
+        placeholder="XXX.XXX.XXX-XX"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Confirme o CPF *</label>
+      <input
+        name="cpf_confirm"
+        type="text"
+        required
+        placeholder="Digite o CPF para confirmar"
+      />
+    </div>
+
     {% else %}
-    <!-- sem pessoa no contexto: pedimos CPF manualmente -->
-    <label>CPF *</label>
-    <input name="cpf_confirm" type="text" required placeholder="Digite o CPF" />
+    <!-- sem pessoa no contexto: pedimos dados manualmente -->
+    <div class="form-group">
+      <label>Nome *</label>
+      <input
+        name="nome"
+        type="text"
+        required
+        placeholder="Digite seu nome completo"
+      />
+    </div>
 
-    <p style="color: gray; font-size: 0.9rem">
-      Observação: se a pessoa ainda não estiver cadastrada, faça o cadastro
-      inicial primeiro.
+    <div class="form-group">
+      <label>CPF *</label>
+      <input
+        name="cpf_confirm"
+        type="text"
+        required
+        placeholder="Digite o CPF (apenas números)"
+      />
+    </div>
+
+    <p style="color: gray; font-size: 0.9rem; margin-top: 10px">
+      <strong>Observação:</strong> Se a pessoa ainda não estiver cadastrada no
+      sistema, faça o cadastro inicial primeiro.
     </p>
     {% endif %}
 
-    <label>COREN *</label>
-    <input name="coren" type="text" required placeholder="Ex: 123456" />
+    <div class="form-group">
+      <label>COREN *</label>
+      <input name="coren" type="text" required placeholder="Ex: 123456/SP" />
+    </div>
 
-    <button type="submit">Cadastrar Enfermeiro</button>
+    <div class="form-group">
+      <label>Senha *</label>
+      <input
+        name="senha"
+        type="password"
+        required
+        placeholder="Digite uma senha segura"
+      />
+    </div>
+
+    <button type="submit" class="btn-submit">Cadastrar Enfermeiro</button>
   </form>
 </div>
+
+<style>
+  .form-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 28px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .form-container input[type="text"],
+  .form-container input[type="email"],
+  .form-container input[type="password"],
+  .form-container select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+  }
+
+  .form-container input:focus,
+  .form-container select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+  }
+
+  .form-control-disabled {
+    background-color: #e8e8e8;
+    cursor: not-allowed;
+  }
+
+  .form-control-disabled:focus {
+    border-color: #ddd;
+    box-shadow: none;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+  }
+
+  .btn-submit:hover {
+    background-color: #667eea;
+  }
+
+  .btn-submit:active {
+    background-color: #667eea;
+  }
+
+  p {
+    margin: 10px 0;
+  }
+</style>
 
 {% endblock %}
