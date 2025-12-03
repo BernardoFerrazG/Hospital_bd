@@ -52,7 +52,7 @@
 
             <div class="col-md-6">
               <label class="form-label">Número da Sala</label>
-              <input type="text" name = "numero"class="form-control" placeholder="Ex: SC-01" required />
+              <input type="text" name = "numero"class="form-control" placeholder="Ex: 1" required />
             </div>
 
 
@@ -92,42 +92,39 @@
           </thead>
 
           <tbody>
+            {% for s in salas %}
+              <tr>
+                <td>{{ s.numero }}</td>
 
-            <!-- EXEMPLOS DE LINHAS -->
-            <tr>
-              <td>SC-01</td>
-              
-              <td><span class="badge bg-success">Disponível</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger">
-                  <i class="bi bi-trash"></i> Remover
-                </button>
-              </td>
-            </tr>
+                <td>
+                  {% if s.status == "Disponível" %}
+                  <span class="badge bg-success">Disponível</span>
 
-            <tr>
-              <td>SC-07</td>
-              
-              <td><span class="badge bg-warning text-dark">Em Uso</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger" disabled>
-                  <i class="bi bi-trash"></i> Remover
-                </button>
-              </td>
-            </tr>
+                  {% elif s.status == "Em Uso" %}
+                  <span class="badge bg-warning text-dark">Em Uso</span>
 
-            <tr>
-              <td>SC-03</td>
-              
-              <td><span class="badge bg-secondary">Em Manutenção</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-danger">
-                  <i class="bi bi-trash"></i> Remover
-                </button>
-              </td>
-            </tr>
+                  {% else %}
+                  <span class="badge bg-secondary">Em Manutenção</span>
+                  {% endif %}
+                </td>
 
+                <td class="text-end">
+                  <a href="{% url 'remover_sala' s.numero %}" 
+                    class="btn btn-sm btn-danger"
+                    {% if s.status == "Em Uso" %}disabled{% endif %}>
+                    Remover
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">
+                  Nenhuma sala cadastrada.
+                </td>
+              </tr>
+            {% endfor %}
           </tbody>
+
         </table>
 
       </div>
