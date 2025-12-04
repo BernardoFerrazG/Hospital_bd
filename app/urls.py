@@ -13,8 +13,8 @@ urlpatterns = [
     path('cadastro/medico/', views.cadastro_medico, name='cadastro_medico'),
     path('cadastro/enfermeiro/', views.cadastro_enfermeiro, name='cadastro_enfermeiro'),
 
-    path('login/', views.login_paciente, name='login'),
-    path('home/', views.home, name='home'),
+    path('login/', paciente_views.login_paciente, name='login'),
+    path('home/', paciente_views.home, name='home'),
     path('home_med/', views.home_med, name='home_med'),
     path('home_enf/', views.home_enf, name='home_enf'),
 

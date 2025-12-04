@@ -6,100 +6,121 @@ from ..models import Pessoa, Paciente, Cirurgia, Consulta, Medico
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import datetime, date
+from app.models import (
+    Pessoa, Paciente, Medico, Consulta, Cirurgia
+)
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.models import User
+from django.contrib.auth import login as login_django
+from django.contrib.auth.decorators import login_required
 
 
 def cadastro_paciente(request):
-    cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None
-    cpf_get = request.GET.get('cpf')
-    pessoa = None
-    if cpf_session:
-        try:
-            pessoa = Pessoa.objects.get(cpf=cpf_session)
-        except Pessoa.DoesNotExist:
-            pessoa = None
-    elif cpf_get:
-        try:
-            pessoa = Pessoa.objects.get(cpf=cpf_get)
-        except Pessoa.DoesNotExist:
-            pessoa = None
-
     if request.method == "GET":
-        return render(request, "cadastros/cadastro_paciente.html", {"pessoa": pessoa})
+        return render(request, "cadastros/cadastro_paciente.html") 
+    
+    # Coleta de dados
+    nome = request.POST.get("nome", "").strip()
+    cpf = request.POST.get("cpf", "").strip()
+    sexo = request.POST.get("sexo", "").strip()
+    telefone = request.POST.get("telefone", "").strip()
+    email = request.POST.get("email", "").strip()
+    data_nascimento = request.POST.get("data_nascimento")
+    senha = request.POST.get("senha", "").strip()
 
-    cpf_hidden = request.POST.get("cpf", "").strip()
-    cpf_confirm = request.POST.get("cpf_confirm", "").strip()
+    # Validações Básicas
+    if not (nome and cpf and senha):
+        messages.error(request, "Campos obrigatórios: nome, cpf e senha.")
+        return redirect('cadastro')
 
-    if not cpf_confirm:
-        return HttpResponse("CPF de confirmação é obrigatório.", status=400)
-
-    if cpf_hidden:
-        if cpf_confirm != cpf_hidden:
-            return HttpResponse("CPF de confirmação não corresponde ao CPF esperado.", status=400)
-        cpf = cpf_hidden
-    else:
-        cpf = cpf_confirm
-
-    try:
-        pessoa_obj = Pessoa.objects.get(cpf=cpf)
-    except Pessoa.DoesNotExist:
-        return HttpResponse("Pessoa não encontrada com esse CPF. Faça primeiro o cadastro inicial.", status=404)
-
-    if Paciente.objects.filter(pcpf=pessoa_obj).exists():
-        return HttpResponse("Já existe um paciente cadastrado com esse CPF.", status=400)
+    if Pessoa.objects.filter(cpf=cpf).exists():
+        messages.error(request, "CPF já cadastrado.")
+        return redirect('cadastro')
 
     try:
         with transaction.atomic():
-            Paciente.objects.create(
-                pcpf=pessoa_obj
+            # 1️⃣ Cria Pessoa
+            pessoa = Pessoa.objects.create(
+                cpf=cpf,
+                nome=nome,
+                sexo=sexo,
+                telefone=telefone,
+                email=email,
+                data_nascimento=data_nascimento if data_nascimento else None,
+                senha=make_password(senha) # Salva a senha hasheada
             )
 
-            if 'cpf' in request.session:
-                try:
-                    request.session.pop('cpf', None)
-                    request.session.save()
-                except Exception:
-                    pass
+            # 2️⃣ Cria Usuário Django (ESSENCIAL PARA LOGIN)
+            if not User.objects.filter(username=cpf).exists():
+                User.objects.create_user(username=cpf, email=email, password=senha) 
+            
+            # 3️⃣ Cria o registro de Paciente
+            Paciente.objects.create(pcpf=pessoa)
+            
+        messages.success(request, "Cadastro realizado com sucesso! Faça login.")
+        return redirect('login') 
 
     except Exception as e:
-        return HttpResponse(f"Erro ao cadastrar paciente: {e}", status=500)
+        messages.error(request, f"Erro ao realizar cadastro: {e}")
+        return redirect('cadastro')
 
-    return redirect(reverse("login"))
 
+def login_paciente(request):
+    if request.method == "GET":
+        return render(request, "login/login_paciente.html") 
 
+    username = request.POST.get("cpf", "").strip()
+    senha = request.POST.get("senha", "")
+    
+    try:
+        pessoa = Pessoa.objects.get(cpf=username)
+    except Pessoa.DoesNotExist:
+        messages.error(request, "CPF não encontrado!")
+        return redirect("login")
+
+    if not check_password(senha, pessoa.senha):
+        messages.error(request, "Senha incorreta!")
+        return redirect("login")
+
+    if Paciente.objects.filter(pcpf=pessoa).exists():
+        try:
+            # Autentica no Django
+            user = User.objects.get(username=username) 
+            login_django(request, user)
+            
+            # Sessão Manual (Legado)
+            request.session['usuario_id'] = pessoa.cpf
+            request.session['tipo'] = 'paciente'
+            
+            messages.success(request, f"Bem-vindo(a), {pessoa.nome}!")
+            return redirect('home') 
+        except User.DoesNotExist:
+            messages.error(request, "Erro de sistema: Usuário de autenticação não encontrado.")
+            return redirect("login")
+    else:
+        messages.error(request, "Acesso negado. Você não está registrado como paciente.")
+        return redirect("login")
 
 
 @login_required(login_url='/login/')
 def home(request):
-    """
-    Renderiza o Painel do Paciente e carrega o contexto necessário (Pessoa, Médico) 
-    para as abas de agendamento.
-    """
     username = request.user.username
-    
     pessoa = None
     paciente = None
     
     try:
         pessoa = Pessoa.objects.get(cpf=username)
     except Pessoa.DoesNotExist:
-        try:
-            pessoa = Pessoa.objects.get(nome=username)
-        except Pessoa.DoesNotExist:
-            pass
+        pessoa = Pessoa.objects.filter(nome=username).first()
     
     if pessoa:
         paciente = Paciente.objects.filter(pcpf=pessoa.cpf).first()
         
-    medicos = Medico.objects.all() 
-    
-    active_tab = request.GET.get('tab', 'resumo')
-    
     return render(request, "home/home.html", {
         'paciente': paciente, 
-        'medicos': medicos, 
         'pessoa': pessoa,
-        'active_tab': active_tab
     })
+
 
 @login_required(login_url='/login/')
 def minha_agenda(request):
