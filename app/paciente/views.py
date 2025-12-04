@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
-from django.db import transaction
-from ..models import Pessoa, Paciente, Cirurgia, Consulta, Medico, Departamento
+from django.db import transaction, connection
+from ..models import Pessoa, Paciente, Cirurgia, Consulta, Medico, Departamento, FuncionarioTrabalhaEm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import datetime, date
@@ -14,6 +14,24 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as login_django
 from django.contrib.auth.decorators import login_required
 
+def get_medicos_com_departamento():
+    # Busca os médicos normais
+    medicos = list(Medico.objects.select_related('mcpf__fcpf').all())
+    
+    # Mapa para guardar CPF -> Departamento
+    mapa = {}
+    
+    with connection.cursor() as cursor:
+        # SQL DIRETO NA SUA TABELA DE RELACIONAMENTO
+        cursor.execute("SELECT cpf_funcionario, nome_departamento FROM funcionario_trabalha_em")
+        for row in cursor.fetchall():
+            mapa[row[0]] = row[1] # CPF = row[0], Depto = row[1]
+            
+    # Cola o departamento em cada médico da lista
+    for m in medicos:
+        m.especialidade = mapa.get(m.mcpf_id, "") 
+        
+    return medicos
 
 def cadastro_paciente(request):
     if request.method == "GET":
@@ -241,9 +259,9 @@ def marcar_consulta(request):
         messages.error(request, "Perfil de paciente incompleto.")
         return redirect('home')
 
-    medicos = Medico.objects.all()
-
     departamentos = Departamento.objects.all()
+
+    medicos = get_medicos_com_departamento()
 
     if request.method == "POST":
         crm = request.POST.get("fmedico_crm")
@@ -310,9 +328,9 @@ def marcar_cirurgia(request):
     except Paciente.DoesNotExist:
         messages.error(request, "Perfil de paciente incompleto.")
         return redirect('home')
-
-    medicos = Medico.objects.all()
     departamentos = Departamento.objects.all()
+
+    medicos = get_medicos_com_departamento()
 
     if request.method == "POST":
         crm = request.POST.get("fmedico_crm")
