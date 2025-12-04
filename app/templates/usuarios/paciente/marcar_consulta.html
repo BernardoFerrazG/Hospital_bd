@@ -1,54 +1,179 @@
 {% extends 'base.html' %}
+
 {% block conteudo %}
+<style>
+    /* 1. Oculta a navbar antiga do base.html */
+    nav.navbar, header nav {
+        display: none !important;
+    }
+
+    /* 2. Estilos da Barra Azul */
+    :root { --bs-primary: #0d6efd; }
+    
+    .hospital-header {
+        background-color: var(--bs-primary);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100%;
+    }
+
+    .hospital-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<!-- BARRA AZUL DO TOPO -->
+<div class="hospital-header">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div class="hospital-brand">
+            <i class="bi bi-hospital me-2"></i> Nome do Hospital
+        </div>
+        <div class="user-info">
+            <span class="me-3">Olá, {{ request.user.username }}</span>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Sair
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="container py-4">
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Agendar Nova Consulta</h2>
+        <h2 class="text-primary">Agendar Nova Consulta</h2>
         <a href="{% url 'home' %}" class="btn btn-outline-secondary">Voltar</a>
     </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+    <!-- (Mensagens removidas) -->
+    
     <hr>
     
     <div class="row">
         <div class="col-12 col-md-8">
-            <p class="text-muted">Selecione o médico, a data e o horário desejado.</p>
+            <p class="text-muted">Selecione o departamento para filtrar os médicos disponíveis.</p>
             
             <form method="POST" action="{% url 'marcar_consulta' %}">
                 {% csrf_token %}
                 
+                <!-- 1. FILTRO DE DEPARTAMENTO -->
                 <div class="mb-3">
-                    <label for="medico_consulta" class="form-label">Médico/Especialidade:</label>
-                    <select id="medico_consulta" name="fmedico_crm" class="form-select" required>
-                        <option value="">Selecione...</option>
+                    <label for="filtro_departamento" class="form-label fw-bold">Departamento / Especialidade:</label>
+                    <select id="filtro_departamento" class="form-select" onchange="filtrarMedicos()">
+                        <option value="">Selecione um departamento...</option>
+                        <!-- O Django preenche isso se você passar 'departamentos' na view -->
+                        {% for dept in departamentos %}
+                            <option value="{{ dept.dnome }}">{{ dept.dnome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 2. SELEÇÃO DE MÉDICO -->
+                <div class="mb-3">
+                    <label for="medico_consulta" class="form-label fw-bold">Médico:</label>
+                    <select id="medico_consulta" name="fmedico_crm" class="form-select" required disabled>
+                        <option value="">Primeiro selecione um departamento acima...</option>
                         {% for medico in medicos %}
-                            <option value="{{ medico.crm }}">
+                            <!-- 
+                                O filtro aqui depende de como a view passa os dados. 
+                                Se 'medico.especialidade' não existir no model, certifique-se de 
+                                anotá-lo na view ou passar um objeto customizado.
+                            -->
+                            <option value="{{ medico.crm }}" data-especialidade="{{ medico.especialidade }}">
                                 Dr(a). {{ medico.mcpf.fcpf.nome }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="data_consulta" class="form-label">Data:</label>
-                    <input type="date" id="data_consulta" name="data" class="form-control" required>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="data_consulta" class="form-label">Data:</label>
+                        <input type="date" id="data_consulta" name="data" class="form-control" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="horario_consulta" class="form-label">Horários:</label>
+                        <!-- Substituído input time por select para forçar 00 ou 30 minutos -->
+                        <select id="horario_consulta" name="horario" class="form-select" required>
+                            <option value="">Selecione um horário...</option>
+                            <option value="07:00">07:00</option>
+                            <option value="07:30">07:30</option>
+                            <option value="08:00">08:00</option>
+                            <option value="08:30">08:30</option>
+                            <option value="09:00">09:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="10:00">10:00</option>
+                            <option value="10:30">10:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="11:30">11:30</option>
+                            <option value="12:00">12:00</option>
+                            <option value="12:30">12:30</option>
+                            <option value="13:00">13:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="14:00">14:00</option>
+                            <option value="14:30">14:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="15:30">15:30</option>
+                            <option value="16:00">16:00</option>
+                            <option value="16:30">16:30</option>
+                            <option value="17:00">17:00</option>
+                            <option value="17:30">17:30</option>
+                            <option value="18:00">18:00</option>
+                            <option value="18:30">18:30</option>
+                            <option value="19:00">19:00</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="horario_consulta" class="form-label">Horário:</label>
-                    <input type="time" id="horario_consulta" name="horario" class="form-control" required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Agendar Consulta</button>
+                <button type="submit" class="btn btn-primary w-100 mt-3 btn-lg">Confirmar Agendamento</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function filtrarMedicos() {
+        const deptSelect = document.getElementById('filtro_departamento');
+        const medicoSelect = document.getElementById('medico_consulta');
+        const deptEscolhido = deptSelect.value;
+        const opcoes = medicoSelect.querySelectorAll('option');
+
+        // Reseta o select de médicos
+        medicoSelect.value = "";
+
+        if (deptEscolhido === "") {
+            medicoSelect.disabled = true;
+            opcoes[0].text = "Primeiro selecione um departamento acima...";
+            return;
+        }
+
+        medicoSelect.disabled = false;
+        opcoes[0].text = "Selecione o médico...";
+
+        let encontrou = false;
+
+        opcoes.forEach(option => {
+            if (!option.hasAttribute('value') || option.value === "") return; // Pula placeholder
+
+            const especialidade = option.getAttribute('data-especialidade');
+            
+            // Lógica de filtro: Mostra se a especialidade for igual ao departamento
+            if (especialidade && especialidade === deptEscolhido) {
+                option.style.display = 'block';
+                encontrou = true;
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        if (!encontrou) {
+            opcoes[0].text = "Nenhum médico encontrado neste departamento.";
+        }
+    }
+</script>
 {% endblock %}

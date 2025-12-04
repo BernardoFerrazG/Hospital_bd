@@ -2,12 +2,12 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
-from ..models import Pessoa, Paciente, Cirurgia, Consulta, Medico
+from ..models import Pessoa, Paciente, Cirurgia, Consulta, Medico, Departamento
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import datetime, date
 from app.models import (
-    Pessoa, Paciente, Medico, Consulta, Cirurgia
+    Pessoa, Paciente, Medico, Consulta, Cirurgia, Departamento
 )
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.models import User
@@ -243,6 +243,8 @@ def marcar_consulta(request):
 
     medicos = Medico.objects.all()
 
+    departamentos = Departamento.objects.all()
+
     if request.method == "POST":
         crm = request.POST.get("fmedico_crm")
         data_str = request.POST.get("data")
@@ -287,6 +289,7 @@ def marcar_consulta(request):
     return render(request, 'usuarios/paciente/marcar_consulta.html', {
         'pessoa': pessoa,
         'medicos': medicos,
+        'departamentos': departamentos,
     })
 
 @login_required(login_url='/login/')
@@ -308,7 +311,8 @@ def marcar_cirurgia(request):
         messages.error(request, "Perfil de paciente incompleto.")
         return redirect('home')
 
-    medicos = Medico.objects.all() 
+    medicos = Medico.objects.all()
+    departamentos = Departamento.objects.all()
 
     if request.method == "POST":
         crm = request.POST.get("fmedico_crm")
@@ -345,4 +349,5 @@ def marcar_cirurgia(request):
     return render(request, 'usuarios/paciente/marcar_cirurgia.html', {
         'pessoa': pessoa,
         'medicos': medicos,
+        'departamentos': departamentos
     })

@@ -2,46 +2,99 @@
 {% load static %}
 
 {% block conteudo %}
+<style>
+    /* 1. Oculta a navbar antiga do base.html */
+    nav.navbar, header nav {
+        display: none !important;
+    }
+
+    /* 2. Estilos da Barra Azul */
+    :root { --bs-primary: #0d6efd; }
+    
+    .hospital-header {
+        background-color: var(--bs-primary);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100%;
+    }
+
+    .hospital-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<!-- BARRA AZUL DO TOPO -->
+<div class="hospital-header">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div class="hospital-brand">
+            <i class="bi bi-hospital me-2"></i> Nome do Hospital
+        </div>
+        <div class="user-info">
+            <span class="me-3">Olá, {{ request.user.username }}</span>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Sair
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="container py-4">
+  <!-- Cabeçalho da Página Interna -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h2 class="mb-0">Histórico Médico Completo</h2>
-      <small class="text-muted">Eventos realizados até hoje, {{ pessoa.nome }}</small>
+      <h2 class="mb-0 text-primary">Histórico Médico Completo</h2>
+      <small class="text-muted">Eventos realizados até hoje.</small>
     </div>
     <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Voltar
+      <i class="bi bi-arrow-left me-1"></i> Voltar para Painel
     </a>
   </div>
 
+  <!-- (Bloco de Mensagens removido) -->
+
   <div class="row">
     
+    <!-- COLUNA 1: CONSULTAS REALIZADAS -->
     <div class="col-12 col-lg-6 mb-4">
       <div class="card shadow-sm border-0 h-100">
-        <div class="card-header bg-primary text-white">
-          <i class="bi bi-file-earmark-medical me-2"></i> Consultas Realizadas
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="bi bi-file-earmark-medical me-2 fs-5"></i> 
+          <span class="fw-bold">Consultas Realizadas</span>
         </div>
         <ul class="list-group list-group-flush">
           {% if consultas_passadas %}
             {% for c in consultas_passadas %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                 <div>
-                  <strong>{{ c.data|date:"d/m/Y" }} às {{ c.horario|time:"H:i" }}</strong>
+                  <div class="mb-1">
+                    <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong> 
+                    <span class="text-muted small">às {{ c.horario|time:"H:i" }}</span>
+                  </div>
                   
                   <div class="small text-muted">
-                    Médico: Dr. {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}
+                    <i class="bi bi-person-badge me-1"></i>
+                    Médico: <strong>Dr(a). {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}</strong>
                   </div>
 
                   <div class="small text-muted">
-                    Local: Consultório {{ c.numero }} (Andar {{ c.andar }})
+                    <i class="bi bi-geo-alt me-1"></i>
+                    Local: Consultório {{ c.numero }} ({{ c.andar }}º Andar)
                   </div>
                 </div>
-                <span class="badge bg-success rounded-pill">
+                
+                <span class="badge bg-success rounded-pill px-3">
                   <i class="bi bi-check-circle-fill me-1"></i> Realizada
                 </span>
               </li>
             {% endfor %}
           {% else %}
-            <li class="list-group-item text-muted text-center py-4">
+            <li class="list-group-item text-muted text-center py-5 bg-light">
+              <i class="bi bi-folder-x fs-1 d-block mb-2 text-secondary"></i>
               Nenhuma consulta registrada no histórico.
             </li>
           {% endif %}
@@ -49,39 +102,49 @@
       </div>
     </div>
 
+    <!-- COLUNA 2: CIRURGIAS E PROCEDIMENTOS -->
     <div class="col-12 col-lg-6 mb-4">
       <div class="card shadow-sm border-0 h-100">
-        <div class="card-header bg-danger text-white">
-          <i class="bi bi-heart-pulse-fill me-2"></i> Cirurgias e Procedimentos
+        <div class="card-header bg-danger text-white d-flex align-items-center">
+          <i class="bi bi-heart-pulse-fill me-2 fs-5"></i> 
+          <span class="fw-bold">Cirurgias e Procedimentos</span>
         </div>
         <ul class="list-group list-group-flush">
           {% if cirurgias_passadas %}
             {% for c in cirurgias_passadas %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                 <div>
-                  <strong>{{ c.data|date:"d/m/Y" }} às {{ c.horario|time:"H:i" }}</strong>
-                  
-                  <div class="small text-muted">
-                    Cirurgião: Dr. {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}
+                  <div class="mb-1">
+                    <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong>
+                    <span class="text-muted small">às {{ c.horario|time:"H:i" }}</span>
                   </div>
                   
                   <div class="small text-muted">
+                    <i class="bi bi-person-badge-fill me-1"></i>
+                    Cirurgião: <strong>Dr(a). {{ c.fmedico.mcpf.fcpf.nome|default:"N/A" }}</strong>
+                  </div>
+                  
+                  <div class="small text-muted">
+                    <i class="bi bi-door-closed-fill me-1"></i>
                     Local: Sala {{ c.fsala.numero }}
                   </div>
                 </div>
-                <span class="badge bg-dark rounded-pill">
+                
+                <span class="badge bg-dark rounded-pill px-3">
                   <i class="bi bi-check-circle-fill me-1"></i> Concluído
                 </span>
               </li>
             {% endfor %}
           {% else %}
-            <li class="list-group-item text-muted text-center py-4">
+            <li class="list-group-item text-muted text-center py-5 bg-light">
+              <i class="bi bi-folder-x fs-1 d-block mb-2 text-secondary"></i>
               Nenhum procedimento registrado.
             </li>
           {% endif %}
         </ul>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

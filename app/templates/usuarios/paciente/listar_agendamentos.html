@@ -1,30 +1,66 @@
 {% extends 'base.html' %}
+
 {% block conteudo %}
+<style>
+    /* 1. Oculta a navbar antiga do base.html para evitar duplicação */
+    nav.navbar, header nav {
+        display: none !important;
+    }
+
+    /* 2. Estilos da Barra Azul (Idêntico à Home) */
+    :root { --bs-primary: #0d6efd; }
+    
+    .hospital-header {
+        background-color: var(--bs-primary);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100%;
+    }
+
+    .hospital-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<!-- BARRA AZUL DO TOPO (Igual à Home) -->
+<div class="hospital-header">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div class="hospital-brand">
+            <i class="bi bi-hospital me-2"></i> Nome do Hospital
+        </div>
+        <div class="user-info">
+            <span class="me-3">Olá, {{ request.user.username }}</span>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Sair
+            </a>
+        </div>
+    </div>
+</div>
 
 <div class="container py-4">
+  <!-- Cabeçalho da Página Interna (Título e Botão Voltar) -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h2 class="mb-0">Minha Agenda Completa</h2>
-      <small class="text-muted">Olá, {{ pessoa.nome }}</small>
+      <h2 class="mb-0 text-primary">Minha Agenda Completa</h2>
+      <!-- Removi o 'Olá' daqui pois já está na barra azul lá em cima -->
+      <small class="text-muted">Consulte seus agendamentos futuros.</small>
     </div>
     <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Voltar
+      <i class="bi bi-arrow-left me-1"></i> Voltar para Painel
     </a>
   </div>
 
-  {# Bloco de Mensagens #}
-  {% if messages %}
-    {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show shadow-sm" role="alert">
-        {{ msg }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
+  <!-- (Bloco de Mensagens foi removido conforme solicitado) -->
 
+  <!-- SEÇÃO 1: CONSULTAS -->
   <div class="row mb-5">
     <div class="col-12">
-      <h5 class="text-primary mb-3 d-flex align-items-center">
+      <h5 class="text-primary mb-3 d-flex align-items-center border-bottom pb-2">
         <i class="bi bi-clipboard2-pulse me-2 fs-4"></i> Consultas Médicas
       </h5>
       
@@ -33,24 +69,27 @@
           <ul class="list-group list-group-flush">
             {% if consultas %}
               {% for c in consultas %}
-                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center py-3">
                   
-                  <div>
+                  <!-- Detalhes da Consulta -->
+                  <div class="mb-2 mb-md-0">
                     <div class="mb-1">
-                      <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong>
+                      <strong class="text-dark fs-5">{{ c.data|date:"d/m/Y" }}</strong>
                       <span class="text-muted mx-2">|</span>
                       <i class="bi bi-clock me-1"></i> {{ c.horario|time:"H:i" }}
                     </div>
 
-                    <div class="small text-muted mt-1">
+                    <div class="text-muted">
                       <span class="me-3 d-block d-md-inline">
                         <i class="bi bi-person-badge me-1"></i>
                         Médico: 
+                        <strong class="text-dark">
                         {% if c.fmedico and c.fmedico.mcpf and c.fmedico.mcpf.fcpf %}
                           Dr(a). {{ c.fmedico.mcpf.fcpf.nome }}
                         {% else %}
                           &mdash;
                         {% endif %}
+                        </strong>
                       </span>
 
                       <span class="d-block d-md-inline mt-1 mt-md-0">
@@ -65,20 +104,22 @@
                     </div>
                   </div>
 
-                  <div class="ms-3">
+                  <!-- Status (Badge) -->
+                  <div>
                     {% now "Y-m-d" as hoje %}
                     {% if c.data|date:"Y-m-d" < hoje %}
-                        <span class="badge bg-secondary rounded-pill">Realizada</span>
+                        <span class="badge bg-secondary rounded-pill px-3 py-2">Realizada</span>
                     {% else %}
-                        <span class="badge bg-info text-dark rounded-pill">Consulta Agendada</span>
+                        <span class="badge bg-info text-dark rounded-pill px-3 py-2">Agendada</span>
                     {% endif %}
                   </div>
 
                 </li>
               {% endfor %}
             {% else %}
-              <li class="list-group-item text-center py-4 text-muted">
-                <p class="mb-0">Nenhuma consulta encontrada.</p>
+              <li class="list-group-item text-center py-5 text-muted bg-light">
+                <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                <p class="mb-0">Nenhuma consulta encontrada para os próximos dias.</p>
               </li>
             {% endif %}
           </ul>
@@ -87,9 +128,10 @@
     </div>
   </div>
 
+  <!-- SEÇÃO 2: CIRURGIAS -->
   <div class="row">
     <div class="col-12">
-      <h5 class="text-danger mb-3 d-flex align-items-center">
+      <h5 class="text-danger mb-3 d-flex align-items-center border-bottom pb-2">
         <i class="bi bi-heart-pulse me-2 fs-4"></i> Procedimentos Cirúrgicos
       </h5>
 
@@ -98,24 +140,26 @@
           <ul class="list-group list-group-flush">
             {% if cirurgias %}
               {% for c in cirurgias %}
-                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center py-3">
                   
-                  <div>
+                  <div class="mb-2 mb-md-0">
                     <div class="mb-1">
-                      <strong class="text-dark">{{ c.data|date:"d/m/Y" }}</strong>
+                      <strong class="text-dark fs-5">{{ c.data|date:"d/m/Y" }}</strong>
                       <span class="text-muted mx-2">|</span>
                       <i class="bi bi-clock me-1"></i> {{ c.horario|time:"H:i" }}
                     </div>
 
-                    <div class="small text-muted mt-1">
+                    <div class="text-muted">
                       <span class="me-3 d-block d-md-inline">
                         <i class="bi bi-person-badge-fill me-1"></i>
                         Cirurgião: 
+                        <strong class="text-dark">
                         {% if c.fmedico and c.fmedico.mcpf and c.fmedico.mcpf.fcpf %}
-                           Dr(a). {{ c.fmedico.mcpf.fcpf.nome }}
+                            Dr(a). {{ c.fmedico.mcpf.fcpf.nome }}
                         {% else %}
-                           &mdash;
+                            &mdash;
                         {% endif %}
+                        </strong>
                       </span>
 
                       <span class="d-block d-md-inline mt-1 mt-md-0">
@@ -133,19 +177,20 @@
                     </div>
                   </div>
 
-                  <div class="ms-3">
+                  <div>
                     {% now "Y-m-d" as hoje %}
                     {% if c.data|date:"Y-m-d" < hoje %}
-                        <span class="badge bg-secondary rounded-pill">Realizada</span>
+                        <span class="badge bg-secondary rounded-pill px-3 py-2">Realizada</span>
                     {% else %}
-                        <span class="badge bg-danger rounded-pill">Cirurgia Agendada</span>
+                        <span class="badge bg-danger rounded-pill px-3 py-2">Cirurgia Agendada</span>
                     {% endif %}
                   </div>
 
                 </li>
               {% endfor %}
             {% else %}
-              <li class="list-group-item text-center py-4 text-muted">
+              <li class="list-group-item text-center py-5 text-muted bg-light">
+                <i class="bi bi-clipboard-x fs-1 d-block mb-2 text-secondary"></i>
                 <p class="mb-0">Nenhuma cirurgia agendada.</p>
               </li>
             {% endif %}
@@ -153,9 +198,13 @@
         </div>
       </div>
       
-      <div class="mt-4 alert alert-light border shadow-sm text-muted small">
-        <i class="bi bi-info-circle-fill me-2 text-primary"></i>
-        <strong>Informação:</strong> Caso precise reagendar ou cancelar qualquer procedimento, entre em contato presencialmente ou pelo telefone da secretaria.
+      <!-- Rodapé de Informação -->
+      <div class="mt-4 alert alert-light border shadow-sm text-muted small d-flex align-items-center">
+        <i class="bi bi-info-circle-fill me-3 fs-4 text-primary"></i>
+        <div>
+            <strong>Informação Importante:</strong><br>
+            Caso precise reagendar ou cancelar qualquer procedimento, entre em contato presencialmente ou pelo telefone da secretaria.
+        </div>
       </div>
 
     </div>

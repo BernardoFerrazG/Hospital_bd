@@ -1,143 +1,187 @@
 {% extends 'base.html' %}
 
 {% block conteudo %}
+<style>
+    /* Tenta ocultar a navbar original do base.html se ela tiver essas classes comuns */
+    /* Isso resolve o problema da 'barra cinza' duplicada */
+    nav.navbar, header nav {
+        display: none !important;
+    }
 
+    /* Estilos específicos */
+    :root { --bs-primary: #0d6efd; }
+    
+    /* 1. Barra Azul do Topo (Nome do Hospital) */
+    .hospital-header {
+        background-color: var(--bs-primary);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100%;
+    }
 
+    .hospital-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
 
-<div class="container py-5">
+    /* 2. Área de Bem-vindo */
+    .welcome-section {
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* 3. Estilo dos Cards */
+    .admin-card {
+        border: none;
+        transition: transform 0.2s;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        height: 100%;
+        background-color: #fff;
+    }
+    
+    .admin-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
 
-   
+    .card-header-custom {
+        background-color: #0d6efd;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    .btn-custom {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+        width: 100%;
+        font-weight: 500;
+    }
+    
+    .btn-custom:hover {
+        background-color: #0b5ed7;
+        color: white;
+    }
+</style>
 
-        <div>
-
-            <h2 class="mb-0">Painel do Paciente</h2>
-
-            <small class="text-muted">Bem-vindo(a),
-
-                <strong>{{ request.user.username }}</strong>.
-
-            </small>
-
+<!-- 1. Barra Azul Superior (Nome do Hospital) -->
+<div class="hospital-header">
+    <!-- Mudança: container-fluid e px-4 para ocupar a largura total com espaçamento -->
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div class="hospital-brand">
+            <i class="bi bi-hospital me-2"></i> Nome do Hospital
         </div>
-
-        <div>
-
-            <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-sm">Sair</a>
-
-        </div>
-
-    </div>
-
-   
-
-    {% if messages %}
-
-        {% for message in messages %}
-
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-
-                {{ message }}
-
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-
-            </div>
-
-        {% endfor %}
-
-    {% endif %}
-
-
-
-    <h3 class="mb-4">Ações Rápidas</h3>
-
-
-
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-
-       
-
-        <div class="col">
-
-            <div class="card h-100 shadow-sm border-primary">
-
-                <div class="card-body d-flex flex-column">
-
-                    <h5 class="card-title text-primary"><i class="bi bi-calendar-check me-2"></i> MINHA AGENDA</h5>
-
-                    <p class="card-text text-muted mb-3">Consulte todos os seus agendamentos futuros.</p>
-
-                    <a href="{% url 'minha_agenda' %}" class="btn btn-primary mt-auto">Ver Próximos</a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="col">
-
-            <div class="card h-100 shadow-sm border-success">
-
-                <div class="card-body d-flex flex-column">
-
-                    <h5 class="card-title text-success"><i class="bi bi-journal-medical me-2"></i> HISTÓRICO MÉDICO</h5>
-
-                    <p class="card-text text-muted mb-3">Acesse o registro de consultas e procedimentos realizados.</p>
-
-                    <a href="{% url 'consultar_historico' %}" class="btn btn-success mt-auto">Ver Concluídos</a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-       
-
-        <div class="col">
-
-            <div class="card h-100 shadow-sm border-info">
-
-                <div class="card-body d-flex flex-column">
-
-                    <h5 class="card-title text-info"><i class="bi bi-calendar-plus me-2"></i> MARCAR CONSULTA</h5>
-
-                    <p class="card-text text-muted mb-3">Agende sua próxima consulta com um especialista.</p>
-
-                    <a href="{% url 'marcar_consulta' %}" class="btn btn-info text-dark mt-auto">Agendar Agora</a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="col">
-
-            <div class="card h-100 shadow-sm border-danger">
-
-                <div class="card-body d-flex flex-column">
-
-                    <h5 class="card-title text-danger"><i class="bi bi-scissors me-2"></i> SOLICITAR CIRURGIA</h5>
-
-                    <p class="card-text text-muted mb-3">Envie uma solicitação de procedimento cirúrgico.</p>
-
-                    <a href="{% url 'marcar_cirurgia' %}" class="btn btn-danger mt-auto">Solicitar</a>
-
-                </div>
-
-            </div>
-
+        <div class="user-info">
+            <span class="me-3">Olá, {{ request.user.username }}</span>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Sair
+            </a>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 2. Área de Bem-vindo -->
+<div class="container welcome-section">
+    <h1 class="fw-bold text-dark">Bem-vindo, {% if pessoa.nome %}{{ pessoa.nome }}{% else %}{{ request.user.username }}{% endif %}</h1>
+    <p class="text-muted lead mb-0">
+        Seu portal para gerenciamento de saúde e consultas.
+    </p>
+</div>
 
+<!-- 3. Grid de Cards -->
+<div class="container pb-5">
+    <div class="row g-4">
+
+        <!-- CARD 1: MINHA AGENDA -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card admin-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="card-header-custom">
+                        AGENDA
+                    </div>
+                    
+                    <h5 class="card-title text-primary mb-2">Minha Agenda</h5>
+                    <p class="card-text text-muted small mb-4">
+                        Consulte seus agendamentos futuros de consultas e cirurgias.
+                    </p>
+                    
+                    <a href="{% url 'minha_agenda' %}" class="btn btn-custom mt-auto">
+                        Visualizar Agenda
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2: HISTÓRICO -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card admin-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="card-header-custom">
+                        HISTÓRICO
+                    </div>
+                    
+                    <h5 class="card-title text-primary mb-2">Histórico Médico</h5>
+                    <p class="card-text text-muted small mb-4">
+                        Acesse o registro completo de procedimentos já realizados.
+                    </p>
+                    
+                    <a href="{% url 'consultar_historico' %}" class="btn btn-custom mt-auto">
+                        Ver Histórico
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: MARCAR CONSULTA -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card admin-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="card-header-custom">
+                        CONSULTAS
+                    </div>
+                    
+                    <h5 class="card-title text-primary mb-2">Marcar Consulta</h5>
+                    <p class="card-text text-muted small mb-4">
+                        Agende uma nova consulta com um de nossos especialistas.
+                    </p>
+                    
+                    <a href="{% url 'marcar_consulta' %}" class="btn btn-custom mt-auto">
+                        Agendar Agora
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 4: SOLICITAR CIRURGIA -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card admin-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="card-header-custom">
+                        CIRURGIAS
+                    </div>
+                    
+                    <h5 class="card-title text-primary mb-2">Solicitar Cirurgia</h5>
+                    <p class="card-text text-muted small mb-4">
+                        Envie uma solicitação de procedimento cirúrgico para análise.
+                    </p>
+                    
+                    <a href="{% url 'marcar_cirurgia' %}" class="btn btn-custom mt-auto">
+                        Solicitar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
 {% endblock %}
