@@ -276,6 +276,14 @@ def marcar_consulta(request):
             medico = Medico.objects.get(crm=crm)
             data_obj = datetime.strptime(data_str, "%Y-%m-%d").date()
             horario_obj = datetime.strptime(horario_str, "%H:%M").time()
+
+            if Consulta.objects.filter(fpaciente=paciente, data=data_obj, horario=horario_obj).exists():
+                messages.error(request, "Conflito: Você já tem uma consulta neste horário.")
+                return redirect(reverse('marcar_consulta'))
+
+            if Consulta.objects.filter(fmedico=medico, data=data_obj, horario=horario_obj).exists():
+                messages.error(request, "Este médico já está ocupado neste horário.")
+                return redirect(reverse('marcar_consulta'))
             
             andar_cons = 1
             numero_cons = 100 
