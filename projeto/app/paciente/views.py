@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
 from ..models import Pessoa, Paciente
-from django.contrib.auth.decorators import login_required
+from ..permissoes import PACIENTE, requer_papel
 
 
 def cadastro_paciente(request):
@@ -74,7 +74,7 @@ def cadastro_paciente(request):
 
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(PACIENTE)
 def home(request):
     return render(request, "home/home.html")
 

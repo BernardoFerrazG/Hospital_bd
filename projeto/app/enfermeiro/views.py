@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.db import transaction
 from ..models import Pessoa, Funcionario, Enfermeiro, Departamento, FuncionarioTrabalhaEm
-from django.contrib.auth.decorators import login_required
+from ..permissoes import ENFERMEIRO, pode_cadastrar_equipe, requer_papel
 from django.contrib.auth import get_user_model
 
 
@@ -12,6 +12,8 @@ from django.contrib.auth import get_user_model
 
 
 def cadastro_enfermeiro(request):
+    if not pode_cadastrar_equipe(request.user, ENFERMEIRO):
+        return HttpResponseForbidden("Apenas administradores podem cadastrar enfermeiros.")
     # tenta recuperar pessoa por sessão ou querystring (se usar esse fluxo)
     cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None
     cpf_get = request.GET.get('cpf')
@@ -91,7 +93,7 @@ def cadastro_enfermeiro(request):
 
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(ENFERMEIRO)
 def home_enf(request):
     nome_user = request.user.username  
     pessoa = Pessoa.objects.get(nome=nome_user)
@@ -103,7 +105,7 @@ def home_enf(request):
     })
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(ENFERMEIRO)
 def enfermeiro_alocacoes(request):
     # Monta lista de alocações para o enfermeiro logado compatível com o template
     from types import SimpleNamespace

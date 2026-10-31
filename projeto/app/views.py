@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as login_django
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from .permissoes import ADMINISTRADOR, ENFERMEIRO, MEDICO, pode_cadastrar_equipe
 from .models import Pessoa, Funcionario, Medico, Paciente, Enfermeiro, Departamento, Administrador, FuncionarioTrabalhaEm
 from .medico.views import cadastro_medico, home_med
 from .enfermeiro.views import cadastro_enfermeiro, home_enf, enfermeiro_alocacoes
@@ -33,6 +34,12 @@ def cadastro(request):
 
     if not (nome and cpf and senha and papel):
         return HttpResponse("Campos obrigatórios: nome, cpf, senha e papel.", status=400)
+
+    papeis_equipe = {"medico": MEDICO, "enfermeiro": ENFERMEIRO, "admin": ADMINISTRADOR}
+    if papel not in (*papeis_equipe, "paciente"):
+        return HttpResponse("Papel inválido.", status=400)
+    if papel in papeis_equipe and not pode_cadastrar_equipe(request.user, papeis_equipe[papel]):
+        return HttpResponseForbidden("Apenas administradores podem cadastrar profissionais.")
 
     if Pessoa.objects.filter(cpf=cpf).exists():
         return HttpResponse("CPF já cadastrado.", status=400)
@@ -123,7 +130,7 @@ def login(request):
             return HttpResponse("Usuário não encontrado como funcionário nem paciente.", status=404)
 
 
-@login_required(login_url='/auth/login/')
+@login_required
 def plataforma(request):
     return HttpResponse("plataforma.")
 
