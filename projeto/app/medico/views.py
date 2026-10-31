@@ -1,15 +1,17 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.db import transaction
 from ..models import Pessoa, Funcionario, Medico, Enfermeiro, Paciente, SalaCirurgia, Cirurgia, LeitoCirurgico, LeitoUTI, Consulta
-from django.contrib.auth.decorators import login_required
+from ..permissoes import MEDICO, pode_cadastrar_equipe, requer_papel
 from datetime import datetime, date
 from django.contrib import messages
 
 
 
 def cadastro_medico(request):
+    if not pode_cadastrar_equipe(request.user, MEDICO):
+        return HttpResponseForbidden("Apenas administradores podem cadastrar médicos.")
     # Tenta recuperar pessoa por sessão / querystring (se você ainda usar essa mecânica)
     cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None
     cpf_get = request.GET.get('cpf')
@@ -81,12 +83,12 @@ def cadastro_medico(request):
     return redirect(reverse("login"))
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(MEDICO)
 def home_med(request):
     return render(request, "home/home_med.html")
 
 
-@login_required(login_url='/login/')
+@requer_papel(MEDICO)
 def listar_salas(request):
 
     salas = SalaCirurgia.objects.order_by('numero')
@@ -102,7 +104,7 @@ def listar_salas(request):
 
 
 
-@login_required(login_url='/login/')
+@requer_papel(MEDICO)
 def alocar_sala(request):
     """
     POST: aloca a sala, cria registro Cirurgia.
@@ -215,7 +217,7 @@ def alocar_sala(request):
     return redirect(reverse("listar_salas"))
 
 
-@login_required(login_url='/login/')
+@requer_papel(MEDICO)
 def listar_leitos(request):
     """
     Lista leitos cirúrgicos e de UTI disponíveis (status='disponivel') e
@@ -232,7 +234,7 @@ def listar_leitos(request):
     })
 
 
-@login_required(login_url='/login/')
+@requer_papel(MEDICO)
 def alocar_leito(request):
     """
     POST: aloca um leito cirurgico ou UTI para um paciente.
@@ -290,7 +292,7 @@ def alocar_leito(request):
     return redirect(reverse("listar_leitos"))
 
 
-@login_required(login_url='/login/')
+@requer_papel(MEDICO)
 def listar_consultas(request):
     """
     Lista as consultas do médico logado para uma data.
@@ -332,7 +334,7 @@ def listar_consultas(request):
         "data": data_obj,
     })
 
-@login_required(login_url='/auth/login/')
+@requer_papel(MEDICO)
 def gerenciar_salas(request):
     # identifica médico
     username = request.user.username
@@ -379,7 +381,7 @@ def gerenciar_salas(request):
 
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(MEDICO)
 def desalocar_sala(request):
     """
     Form esperado: POST com campo 'sala_numero' (número da sala) e checkbox 'cancel_cirurgias' (opcional).
@@ -448,7 +450,7 @@ def desalocar_sala(request):
     return redirect(reverse("gerenciar_salas"))
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(MEDICO)
 def liberar_leito(request):
     if request.method != "POST":
         return HttpResponse("Método inválido", status=405)

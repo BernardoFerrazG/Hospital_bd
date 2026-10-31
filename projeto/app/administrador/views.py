@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.db import transaction
 from ..models import Pessoa, Funcionario, Administrador, Departamento, FuncionarioTrabalhaEm
-from django.contrib.auth.decorators import login_required
+from ..permissoes import ADMINISTRADOR, pode_cadastrar_equipe, requer_papel
 
 
 
 def cadastro_admin(request):
+    if not pode_cadastrar_equipe(request.user, ADMINISTRADOR):
+        return HttpResponseForbidden("Apenas administradores podem cadastrar administradores.")
     # tenta recuperar pessoa por sessão ou querystring (compatível com restante do fluxo)
     cpf_session = request.session.get('cpf') if hasattr(request, 'session') else None
     cpf_get = request.GET.get('cpf')
@@ -81,11 +83,11 @@ def cadastro_admin(request):
 
 
 
-@login_required(login_url='/auth/login/')
+@requer_papel(ADMINISTRADOR)
 def home_admin(request):
     return render(request, "home/home_admin.html")
 
-@login_required(login_url='/auth/login/')
+@requer_papel(ADMINISTRADOR)
 def alocar_funcionario(request):
     if request.method == "GET":
         funcionarios = Funcionario.objects.all()
